@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The real theme is Compose-side (ui/theme/Theme.kt). This XML theme only covers the
+      window before the first frame, so it is dark by default to match「深色模式优先」 and
+      avoid a white flash on launch.
+    -->
+    <style name="Theme.LifeOS" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

@@ -1,0 +1,18 @@
+## Gradle / build output
+# Unanchored so it also covers app/build, not just the root.
+build/
+.gradle/
+.cxx/
+.externalNativeBuild/
+/captures/
+
+## Machine-specific
+local.properties
+
+## IDE
+*.iml
+.idea/
+
+## Misc
+.DS_Store
+*.hprof

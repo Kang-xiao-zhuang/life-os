@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches LifeOsDarkScheme.background in ui/theme/Color.kt — keep the two in sync. -->
+    <color name="window_background">#FF12131A</color>
+    <color name="ic_launcher_background">#FF12131A</color>
+</resources>
