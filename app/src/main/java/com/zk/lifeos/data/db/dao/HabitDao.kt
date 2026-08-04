@@ -2,6 +2,7 @@ package com.zk.lifeos.data.db.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.zk.lifeos.data.db.entity.HabitCheckEntity
 import com.zk.lifeos.data.db.entity.HabitEntity
@@ -26,10 +27,17 @@ interface HabitDao {
     )
     fun observeCheckedCount(date: Int): Flow<Int>
 
+    /**
+     * All check-ins from [from] onwards, in one query. Streaks and the week grid are computed
+     * from this in the repository — never stored, so they can't drift out of date.
+     */
+    @Query("SELECT * FROM habit_checks WHERE date >= :from ORDER BY date ASC")
+    fun observeChecksSince(from: Int): Flow<List<HabitCheckEntity>>
+
     @Insert
     suspend fun insert(habit: HabitEntity): Long
 
     /** The (habitId, date) unique index makes a repeated tap a no-op instead of a duplicate. */
-    @Insert(onConflict = androidx.room.OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCheck(check: HabitCheckEntity): Long
 }

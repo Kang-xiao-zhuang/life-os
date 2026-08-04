@@ -62,4 +62,10 @@ enum class TopLevelDestination(
 /** Routes that are not bottom-bar tabs. */
 object Routes {
     const val SETTINGS = "settings"
+
+    /** A project's task list. Tasks only make sense inside their project (or on Dashboard). */
+    const val PROJECT_DETAIL = "projects/{projectId}"
+    const val ARG_PROJECT_ID = "projectId"
+
+    fun projectDetail(projectId: Long) = "projects/$projectId"
 }

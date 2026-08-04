@@ -13,6 +13,9 @@ interface JournalDao {
     @Query("SELECT * FROM journal_entries WHERE date = :date LIMIT 1")
     fun observeByDate(date: Int): Flow<JournalEntryEntity?>
 
+    @Query("SELECT * FROM journal_entries ORDER BY date DESC LIMIT :limit")
+    fun observeRecent(limit: Int): Flow<List<JournalEntryEntity>>
+
     @Query("SELECT COUNT(*) FROM journal_entries")
     fun observeCount(): Flow<Int>
 

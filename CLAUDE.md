@@ -76,17 +76,35 @@ the bottom bar hides on it.
 
 ## Status
 
-**Phase 1 (项目初始化) done** — builds, installs, runs, verified on an emulator.
+**Phase 1 (项目初始化) + Phase 2 (基础页面) done** — builds, installs, runs; every screen
+verified by screenshot on the emulator, with data and empty.
 
 - Full V1 schema declared up front (6 tables: projects / tasks / habits / habit_checks /
   journal_entries / captures), so Phase 3 does not churn through Room migrations.
-- Theme switching is the one fully working feature, on purpose: it exercises the entire
+- Theme switching is the one fully working *write* path, on purpose: it exercises the entire
   UI → Service → Repository → DataStore chain, verified by killing the app and relaunching.
-- Every screen except Dashboard/Settings is an explicit `PlaceholderScreen` that says what will
-  live there. Dashboard shows a temporary "Phase 1 自检" card reading counts from SQLite.
+- Six screens laid out against real queries: Dashboard (今日最重要 / 今日任务 / 今日习惯 /
+  快速记录 / 今日复盘), Projects (progress + 未归类), Project detail = the task list,
+  Habits (streak + week dots), Journal (today's four prompts + history), Capture (inbox).
+- Streaks and the week grid are **computed from check-ins, never stored**, so they cannot drift.
+- Read-side only: `PhaseNote(...)` at the bottom of each screen states what Phase 3 adds.
+  Non-working controls are deliberately **not rendered** — a task's leading circle is a status
+  icon, not a checkbox. Delete each `PhaseNote` as its feature lands.
 
-Next: **Phase 2 (基础页面)** — real layouts for Dashboard / Projects / Tasks / Habits / Journal /
-Capture. Then Phase 3 (核心功能), Phase 4 (数据管理: 导出/导入 + settings).
+Next: **Phase 3 (核心功能)** — 项目管理 / 任务管理 / 习惯打卡 / 快速记录 / 每日复盘, i.e. the
+write paths + the controls that go with them. Then Phase 4 (数据管理: 导出/导入 + real migrations).
+
+### Verifying a layout without shipping fake data
+
+The app never seeds sample data. To eyeball a screen with content, insert rows straight into the
+app's database and delete them afterwards:
+
+```powershell
+adb shell "run-as com.zk.lifeos.debug sqlite3 /data/data/com.zk.lifeos.debug/databases/lifeos.db \"<sql>\""
+```
+
+`run-as` reaches the private data dir without root, and `sqlite3` is on the emulator image.
+Dates are epoch days, timestamps epoch millis.
 
 ### 🔴 Must fix before the app holds real data
 
