@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shortcut icon: a plus on the app's dark background, drawn as a vector so the project keeps
+     no binary assets. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <path
+        android:pathData="M0,0h48v48h-48z"
+        android:fillColor="#12131A" />
+
+    <path
+        android:pathData="M24,14 L24,34 M14,24 L34,24"
+        android:strokeColor="#93B7F5"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round" />
+</vector>

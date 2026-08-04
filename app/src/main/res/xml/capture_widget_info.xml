@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  updatePeriodMillis=0: the widget is a static button, so the system never needs to refresh it.
+  targetCellWidth/Height apply on Android 12+; minWidth/minHeight cover older versions.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_capture_description"
+    android:initialLayout="@layout/widget_capture"
+    android:minWidth="140dp"
+    android:minHeight="40dp"
+    android:previewImage="@drawable/ic_launcher_foreground"
+    android:previewLayout="@layout/widget_capture"
+    android:resizeMode="horizontal"
+    android:targetCellWidth="3"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

@@ -8,7 +8,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
@@ -37,12 +41,24 @@ import com.zk.lifeos.ui.screen.settings.SettingsScreen
  * a tab rather than being tabs themselves.
  */
 @Composable
-fun LifeOsApp() {
+fun LifeOsApp(captureRequest: Int = 0) {
     val navController = rememberNavController()
+    // Set when the widget/shortcut asked for capture, cleared once the field has taken focus, so
+    // coming back to the tab later doesn't pop the keyboard again.
+    var autoFocusCapture by remember { mutableStateOf(false) }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val currentDestination = backStackEntry?.destination
     val showBottomBar = currentRoute !in setOf(Routes.SETTINGS, Routes.PROJECT_DETAIL)
+
+    // Jump straight to the capture field when opened from the home screen. Keyed on the counter,
+    // so tapping the widget again re-triggers it.
+    LaunchedEffect(captureRequest) {
+        if (captureRequest > 0) {
+            autoFocusCapture = true
+            navController.navigateToTab(TopLevelDestination.CAPTURE)
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -86,7 +102,12 @@ fun LifeOsApp() {
                     onOpenProject = { id -> navController.navigate(Routes.projectDetail(id)) },
                 )
             }
-            composable(TopLevelDestination.CAPTURE.route) { CaptureScreen() }
+            composable(TopLevelDestination.CAPTURE.route) {
+                CaptureScreen(
+                    autoFocus = autoFocusCapture,
+                    onAutoFocusConsumed = { autoFocusCapture = false },
+                )
+            }
             composable(TopLevelDestination.HABITS.route) { HabitsScreen() }
             composable(TopLevelDestination.JOURNAL.route) { JournalScreen() }
 

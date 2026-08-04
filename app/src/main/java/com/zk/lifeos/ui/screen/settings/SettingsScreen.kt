@@ -35,6 +35,7 @@ import com.zk.lifeos.ui.components.ConfirmDialog
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
+import com.zk.lifeos.widget.WidgetPinning
 
 /**
  * 设置. Not a bottom-bar tab — reached from the Dashboard top bar, per spec.
@@ -109,6 +110,8 @@ fun SettingsScreen(
             }
         }
 
+        HomeScreenCard()
+
         AboutCard()
     }
 
@@ -127,6 +130,26 @@ fun SettingsScreen(
                 importLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
             },
         )
+    }
+}
+
+/** 桌面快捷记录 — offered here because nobody discovers widgets by browsing the widget picker. */
+@Composable
+private fun HomeScreenCard() {
+    val context = LocalContext.current
+    val supported = remember { WidgetPinning.isSupported(context) }
+
+    SectionCard(title = "桌面") {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            EmptyHint("放一个「记一笔」小组件在桌面上,想到什么一步就能记下来。长按 App 图标也有同样的入口。")
+            if (supported) {
+                OutlinedButton(onClick = { WidgetPinning.requestPin(context) }) {
+                    Text("添加到桌面")
+                }
+            } else {
+                EmptyHint("这个桌面不支持一键添加,请长按桌面空白处,从小组件列表里找 LifeOS。")
+            }
+        }
     }
 }
 

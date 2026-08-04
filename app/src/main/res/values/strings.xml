@@ -9,4 +9,9 @@
     <string name="nav_habits">习惯</string>
     <string name="nav_journal">复盘</string>
     <string name="nav_settings">设置</string>
+
+    <!-- 桌面快捷记录 -->
+    <string name="widget_capture_label">记一笔</string>
+    <string name="widget_capture_description">一步记下想到的任何东西</string>
+    <string name="shortcut_capture_long_label">快速记录一笔</string>
 </resources>

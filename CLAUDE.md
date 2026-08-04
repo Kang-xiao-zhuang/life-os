@@ -128,8 +128,30 @@ instrumented tests.
 - Zip entries under `attachments/` are path-checked before writing, so a crafted archive cannot
   escape the attachments directory.
 
-Next (post-V1, only if it earns its place): Markdown *rendering* for journal entries (text is
-already stored verbatim), and an attachments feature — the backup format already carries them.
+**Post-V1 additions (2026-08-04)**
+
+- **桌面快捷记录** — a home-screen widget (`widget/CaptureWidgetProvider`, plain `RemoteViews`)
+  and a launcher shortcut, both firing `LifeOsIntents.ACTION_QUICK_CAPTURE`. MainActivity is
+  `singleTop` and counts the requests, so a repeat tap re-opens the field via `onNewIntent`.
+  Landing focuses the input: from the home screen you arrive on a cursor, not on a screen you
+  still have to tap. Settings has an 添加到桌面 button (`WidgetPinning`) because nobody discovers
+  widgets by browsing the picker.
+  - The shortcut is registered **at runtime**, not in `res/xml/shortcuts.xml`: a static shortcut
+    must hard-code `targetPackage`, and resource files get no `${applicationId}` substitution, so
+    it would point at the release id and silently do nothing in the `.debug` build.
+  - The widget shows no data on purpose — nothing to update, nothing to go stale, no wakeups.
+    It carries its own colours in `values/colors.xml` since widgets don't inherit the app theme.
+- **复盘可回看** — history rows open a read-only sheet with the full four prompts. Blank prompts
+  are skipped. History limit raised to 90 entries.
+
+Considered and dropped: **weather on the Dashboard**. It needs `INTERNET`, which would break the
+「不联网 · 零权限」claim that the About card makes. (A keyless source — open-meteo — was verified
+reachable, so this stays possible if the trade is ever worth making.)
+
+Still open, only if it earns its place: Markdown *rendering* for journal entries (text is already
+stored verbatim), an attachments feature (the backup format already carries them), reminders
+(would need `POST_NOTIFICATIONS`, same zero-permission trade-off as weather), an "all open tasks"
+view, and a habit month heatmap.
 
 ### Verifying on the emulator
 

@@ -14,7 +14,11 @@ class JournalRepository(private val journalDao: JournalDao) {
         journalDao.observeByDate(date.toEpochDayInt())
             .map { it?.toModel() ?: JournalEntry(date = date) }
 
-    fun observeRecent(limit: Int = 14): Flow<List<JournalEntry>> =
+    /**
+     * History for looking back. Bounded rather than unlimited so the screen can't grow without
+     * end, but generous — the point of writing a review is reading it again months later.
+     */
+    fun observeRecent(limit: Int = 90): Flow<List<JournalEntry>> =
         journalDao.observeRecent(limit).map { list -> list.map { it.toModel() } }
 
     /**

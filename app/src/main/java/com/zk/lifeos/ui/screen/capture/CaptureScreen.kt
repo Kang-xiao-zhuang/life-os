@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,11 +41,24 @@ import java.time.LocalDate
  * when it's due, the thought is already gone.
  */
 @Composable
-fun CaptureScreen(modifier: Modifier = Modifier) {
+fun CaptureScreen(
+    modifier: Modifier = Modifier,
+    /** True when opened from the home-screen widget or launcher shortcut. */
+    autoFocus: Boolean = false,
+    onAutoFocusConsumed: () -> Unit = {},
+) {
     val viewModel: CaptureViewModel = viewModel(factory = LifeOsViewModelFactory.Factory)
     val inbox by viewModel.inbox.collectAsStateWithLifecycle()
     var text by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
+
+    // Coming from the home screen should land on a cursor, not on a screen you still have to tap.
+    LaunchedEffect(autoFocus) {
+        if (autoFocus) {
+            focusRequester.requestFocus()
+            onAutoFocusConsumed()
+        }
+    }
 
     LifeOsScreen(title = "记录", modifier = modifier) {
         SectionCard(title = "记一笔") {

@@ -3,4 +3,10 @@
     <!-- Matches LifeOsDarkScheme.background in ui/theme/Color.kt — keep the two in sync. -->
     <color name="window_background">#FF12131A</color>
     <color name="ic_launcher_background">#FF12131A</color>
+
+    <!-- Widgets don't inherit the Compose theme, so they carry their own copy of the palette. -->
+    <color name="widget_background">#FF171922</color>
+    <color name="widget_outline">#FF3A3F52</color>
+    <color name="widget_text">#FFE6E8F0</color>
+    <color name="widget_accent">#FF93B7F5</color>
 </resources>
