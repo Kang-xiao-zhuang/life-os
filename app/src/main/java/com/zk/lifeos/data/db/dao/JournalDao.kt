@@ -49,4 +49,15 @@ interface JournalDao {
 
     @Query("DELETE FROM journal_entries WHERE id = :id")
     suspend fun delete(id: Long)
+
+    // ---- backup / restore ----
+
+    @Query("SELECT * FROM journal_entries")
+    suspend fun getAll(): List<JournalEntryEntity>
+
+    @Insert
+    suspend fun insertAll(entries: List<JournalEntryEntity>)
+
+    @Query("DELETE FROM journal_entries")
+    suspend fun deleteAll()
 }

@@ -1,6 +1,7 @@
 package com.zk.lifeos
 
 import android.content.Context
+import com.zk.lifeos.data.backup.BackupStore
 import com.zk.lifeos.data.db.LifeOsDatabase
 import com.zk.lifeos.data.prefs.AppPreferences
 import com.zk.lifeos.data.repository.CaptureRepository
@@ -9,6 +10,7 @@ import com.zk.lifeos.data.repository.JournalRepository
 import com.zk.lifeos.data.repository.ProjectRepository
 import com.zk.lifeos.data.repository.SettingsRepository
 import com.zk.lifeos.data.repository.TaskRepository
+import com.zk.lifeos.service.BackupService
 import com.zk.lifeos.service.CaptureService
 import com.zk.lifeos.service.DashboardService
 import com.zk.lifeos.service.HabitService
@@ -48,6 +50,9 @@ class AppContainer(context: Context) {
 
     private val captureRepository: CaptureRepository by lazy { CaptureRepository(database.captureDao()) }
 
+    /** Backup needs the database itself (file copy + cross-table transaction), not a single DAO. */
+    private val backupStore: BackupStore by lazy { BackupStore(appContext, database) }
+
     // ---- services (what the UI is allowed to talk to) ----
 
     val settingsService: SettingsService by lazy { SettingsService(settingsRepository) }
@@ -70,4 +75,6 @@ class AppContainer(context: Context) {
     val journalService: JournalService by lazy { JournalService(journalRepository) }
 
     val captureService: CaptureService by lazy { CaptureService(captureRepository, taskRepository) }
+
+    val backupService: BackupService by lazy { BackupService(backupStore, settingsRepository) }
 }

@@ -38,7 +38,7 @@ object LifeOsViewModelFactory {
         initializer { HabitsViewModel(container.habitService) }
         initializer { JournalViewModel(container.journalService) }
         initializer { CaptureViewModel(container.captureService) }
-        initializer { SettingsViewModel(container.settingsService) }
+        initializer { SettingsViewModel(container.settingsService, container.backupService) }
     }
 }
 

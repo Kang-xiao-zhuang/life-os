@@ -27,4 +27,16 @@ interface CaptureDao {
 
     @Query("DELETE FROM captures WHERE id = :id")
     suspend fun delete(id: Long)
+
+    // ---- backup / restore ----
+    // Processed rows included: the inbox history is part of the record.
+
+    @Query("SELECT * FROM captures")
+    suspend fun getAll(): List<CaptureEntity>
+
+    @Insert
+    suspend fun insertAll(captures: List<CaptureEntity>)
+
+    @Query("DELETE FROM captures")
+    suspend fun deleteAll()
 }

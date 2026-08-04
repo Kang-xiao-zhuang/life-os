@@ -57,4 +57,25 @@ interface HabitDao {
 
     @Query("SELECT COUNT(*) FROM habit_checks WHERE habitId = :habitId AND date = :date")
     suspend fun isChecked(habitId: Long, date: Int): Int
+
+    // ---- backup / restore ----
+
+    @Query("SELECT * FROM habits")
+    suspend fun getAll(): List<HabitEntity>
+
+    @Query("SELECT * FROM habit_checks")
+    suspend fun getAllChecks(): List<HabitCheckEntity>
+
+    @Insert
+    suspend fun insertAll(habits: List<HabitEntity>)
+
+    @Insert
+    suspend fun insertAllChecks(checks: List<HabitCheckEntity>)
+
+    /** Checks first, then habits — the other order trips the foreign key. */
+    @Query("DELETE FROM habit_checks")
+    suspend fun deleteAllChecks()
+
+    @Query("DELETE FROM habits")
+    suspend fun deleteAll()
 }

@@ -76,8 +76,9 @@ the bottom bar hides on it.
 
 ## Status
 
-**Phase 1 (项目初始化) + Phase 2 (基础页面) + Phase 3 (核心功能) done** — builds, installs, runs;
-every screen verified on the emulator, and all 18 write-path checks pass end to end.
+**V1 complete — Phases 1–4 all done.** Builds, installs, runs; every screen verified on the
+emulator, 18 write-path checks pass end to end, and the backup round trip is covered by
+instrumented tests.
 
 - Full V1 schema declared up front (6 tables: projects / tasks / habits / habit_checks /
   journal_entries / captures), so Phase 3 does not churn through Room migrations.
@@ -106,8 +107,29 @@ every screen verified on the emulator, and all 18 write-path checks pass end to 
 - `JournalViewModel` owns the edit draft. A `remember`-ed local copy would be seeded from the
   empty placeholder before the DB emits and then never refresh — blank fields over saved text.
 
-Next: **Phase 4 (数据管理)** — 导出 / 导入 (`LifeOS_Backup.zip`), settings, and **real Room
-migrations** (see the warning below).
+- Phase 4 added 导出 / 导入 (`LifeOS_Backup.zip`), finished the settings page, and **closed the
+  destructive-migration risk** (see Database above — there is no `fallbackToDestructiveMigration`
+  any more).
+
+**Backup, and why it is built this way**
+
+- Export writes `database.db` + `config.json` (+ `attachments/` when any exist) through the system
+  file picker (SAF). That is what keeps the app at **zero permissions**: the user picks the file
+  and grants access to that one file.
+- **`database.checkpoint()` before copying the file.** With WAL enabled the newest writes live in
+  `lifeos.db-wal`, so copying the main file alone yields a backup missing whatever the user just
+  did. There is a test for exactly this.
+- Import copies rows into the live database **inside one transaction** rather than swapping the
+  file under an open Room instance — a half-applied restore is worse than a failed one. Primary
+  keys are preserved so tasks keep their project and check-ins keep their habit. Delete children
+  before parents, insert parents before children, or the foreign keys refuse.
+- `config.json` carries `schemaVersion`; importing an archive from a different schema version is
+  refused with a message rather than half-read.
+- Zip entries under `attachments/` are path-checked before writing, so a crafted archive cannot
+  escape the attachments directory.
+
+Next (post-V1, only if it earns its place): Markdown *rendering* for journal entries (text is
+already stored verbatim), and an attachments feature — the backup format already carries them.
 
 ### Verifying on the emulator
 
@@ -135,11 +157,16 @@ Dates are epoch days, timestamps epoch millis.
   rather than sleeping a fixed time, and assert the expected screen before continuing.
 - `adb shell input text` is ASCII-only; use Latin text for automated entry.
 
-### 🔴 Must fix before the app holds real data
+### Tests
 
-`LifeOsDatabase.build()` uses `fallbackToDestructiveMigration(dropAllTables = true)`. That is a
-development convenience — **a schema change silently wipes everything**. Replace with real
-migrations as part of Phase 4.
+```powershell
+$env:JAVA_HOME="D:\Develop\android\jbr"
+.\gradlew.bat :app:connectedDebugAndroidTest     # needs a running emulator/device
+```
+
+`BackupRoundTripTest` runs against the **real** `lifeos.db` (an in-memory Room instance would not
+exercise the WAL checkpoint) and wipes the database around each test — so don't run it on a device
+holding data you care about.
 
 ---
 

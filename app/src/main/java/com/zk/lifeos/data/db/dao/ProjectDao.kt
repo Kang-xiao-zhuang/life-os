@@ -47,4 +47,16 @@ interface ProjectDao {
     /** Next free slot at the end of the manual ordering. */
     @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM projects")
     suspend fun nextSortOrder(): Int
+
+    // ---- backup / restore ----
+    // Archived rows included: a backup must be everything, not just what the lists show.
+
+    @Query("SELECT * FROM projects")
+    suspend fun getAll(): List<ProjectEntity>
+
+    @Insert
+    suspend fun insertAll(projects: List<ProjectEntity>)
+
+    @Query("DELETE FROM projects")
+    suspend fun deleteAll()
 }
