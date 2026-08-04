@@ -50,11 +50,13 @@ import java.time.LocalDate
 @Composable
 fun ProjectsScreen(
     onOpenProject: (Long) -> Unit,
+    onOpenAllTasks: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: ProjectsViewModel = viewModel(factory = LifeOsViewModelFactory.Factory)
     val projects by viewModel.projects.collectAsStateWithLifecycle()
     val unassigned by viewModel.unassigned.collectAsStateWithLifecycle()
+    val openTaskCount by viewModel.openTaskCount.collectAsStateWithLifecycle()
     val today = LocalDate.now()
 
     var creating by remember { mutableStateOf(false) }
@@ -66,6 +68,18 @@ fun ProjectsScreen(
         modifier = modifier,
         floatingActionButton = { LifeOsFab("新项目") { creating = true } },
     ) {
+        // First, because「我现在能做什么」is the question you bring to this tab. Without it a task
+        // with no due date and no MIT flag is only findable by opening its project.
+        if (openTaskCount > 0) {
+            SectionCard(
+                title = "所有待办",
+                trailing = "$openTaskCount 项",
+                onClick = onOpenAllTasks,
+            ) {
+                EmptyHint("不分项目,按时间先后排好的一整张清单。")
+            }
+        }
+
         if (projects.isEmpty()) {
             SectionCard(title = "还没有项目") {
                 EmptyHint("项目是长期在做的事:工作、学习、阅读、健身、自媒体。每个项目下面挂任务。")

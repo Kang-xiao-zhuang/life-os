@@ -1,6 +1,7 @@
 package com.zk.lifeos.data.repository
 
 import com.zk.lifeos.data.db.dao.ProjectWithCounts
+import com.zk.lifeos.data.db.dao.TaskWithProject
 import com.zk.lifeos.data.db.entity.CaptureEntity
 import com.zk.lifeos.data.db.entity.JournalEntryEntity
 import com.zk.lifeos.data.db.entity.TaskEntity
@@ -8,6 +9,7 @@ import com.zk.lifeos.model.CaptureItem
 import com.zk.lifeos.model.JournalEntry
 import com.zk.lifeos.model.ProjectSummary
 import com.zk.lifeos.model.Task
+import com.zk.lifeos.model.TaskListItem
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -37,6 +39,12 @@ internal fun TaskEntity.toModel(): Task = Task(
     done = done,
     dueDate = dueDate?.toLocalDate(),
     isMit = isMit,
+)
+
+internal fun TaskWithProject.toModel(): TaskListItem = TaskListItem(
+    task = task.toModel(),
+    projectName = projectName,
+    projectEmoji = projectEmoji,
 )
 
 internal fun ProjectWithCounts.toModel(): ProjectSummary = ProjectSummary(

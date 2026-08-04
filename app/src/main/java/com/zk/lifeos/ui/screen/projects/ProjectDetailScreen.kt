@@ -58,6 +58,7 @@ fun ProjectDetailScreen(
     val name by viewModel.projectName.collectAsStateWithLifecycle()
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val projects by viewModel.projects.collectAsStateWithLifecycle()
+    val mitCount by viewModel.mitCount.collectAsStateWithLifecycle()
     val today = LocalDate.now()
     var editor by remember { mutableStateOf<Editor>(Editor.None) }
 
@@ -116,6 +117,7 @@ fun ProjectDetailScreen(
             existing = null,
             projects = projects,
             defaultProjectId = projectId,
+            currentMitCount = mitCount,
             onDismiss = { editor = Editor.None },
             onSave = { draft ->
                 viewModel.saveTask(null, draft)
@@ -125,6 +127,7 @@ fun ProjectDetailScreen(
         is Editor.Edit -> TaskEditSheet(
             existing = current.task,
             projects = projects,
+            currentMitCount = mitCount,
             onDismiss = { editor = Editor.None },
             onSave = { draft ->
                 viewModel.saveTask(current.task, draft)

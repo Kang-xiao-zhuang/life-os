@@ -33,6 +33,7 @@ import com.zk.lifeos.ui.screen.journal.JournalScreen
 import com.zk.lifeos.ui.screen.projects.ProjectDetailScreen
 import com.zk.lifeos.ui.screen.projects.ProjectsScreen
 import com.zk.lifeos.ui.screen.settings.SettingsScreen
+import com.zk.lifeos.ui.screen.tasks.AllTasksScreen
 
 /**
  * App shell: bottom bar + nav host.
@@ -49,7 +50,8 @@ fun LifeOsApp(captureRequest: Int = 0) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val currentDestination = backStackEntry?.destination
-    val showBottomBar = currentRoute !in setOf(Routes.SETTINGS, Routes.PROJECT_DETAIL)
+    val showBottomBar =
+        currentRoute !in setOf(Routes.SETTINGS, Routes.PROJECT_DETAIL, Routes.ALL_TASKS)
 
     // Jump straight to the capture field when opened from the home screen. Keyed on the counter,
     // so tapping the widget again re-triggers it.
@@ -100,7 +102,11 @@ fun LifeOsApp(captureRequest: Int = 0) {
             composable(TopLevelDestination.PROJECTS.route) {
                 ProjectsScreen(
                     onOpenProject = { id -> navController.navigate(Routes.projectDetail(id)) },
+                    onOpenAllTasks = { navController.navigate(Routes.ALL_TASKS) },
                 )
+            }
+            composable(Routes.ALL_TASKS) {
+                AllTasksScreen(onBack = { navController.popBackStack() })
             }
             composable(TopLevelDestination.CAPTURE.route) {
                 CaptureScreen(

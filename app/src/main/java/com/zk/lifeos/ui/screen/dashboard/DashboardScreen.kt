@@ -8,6 +8,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +55,7 @@ fun DashboardScreen(
     val viewModel: DashboardViewModel = viewModel(factory = LifeOsViewModelFactory.Factory)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val projects by viewModel.projects.collectAsStateWithLifecycle()
+    val mitCount by viewModel.mitCount.collectAsStateWithLifecycle()
     var editor by remember { mutableStateOf<Editor>(Editor.None) }
 
     LifeOsScreen(
@@ -78,6 +80,7 @@ fun DashboardScreen(
             state = state,
             onToggle = viewModel::toggleTask,
             onEdit = { editor = Editor.Edit(it) },
+            onRescheduleOverdue = viewModel::rescheduleOverdue,
         )
         HabitsCard(
             state = state,
@@ -113,6 +116,7 @@ fun DashboardScreen(
         Editor.New -> TaskEditSheet(
             existing = null,
             projects = projects,
+            currentMitCount = mitCount,
             onDismiss = { editor = Editor.None },
             onSave = { draft ->
                 viewModel.saveTask(null, draft)
@@ -122,6 +126,7 @@ fun DashboardScreen(
         is Editor.Edit -> TaskEditSheet(
             existing = current.task,
             projects = projects,
+            currentMitCount = mitCount,
             onDismiss = { editor = Editor.None },
             onSave = { draft ->
                 viewModel.saveTask(current.task, draft)
@@ -191,6 +196,7 @@ private fun TodayTasksCard(
     state: DashboardSnapshot,
     onToggle: (Task) -> Unit,
     onEdit: (Task) -> Unit,
+    onRescheduleOverdue: () -> Unit,
 ) {
     val overdue = state.dueToday.count { it.isOverdue(state.today) }
     val open = state.dueToday.count { !it.done }
@@ -218,6 +224,12 @@ private fun TodayTasksCard(
                         onToggle = { onToggle(task) },
                         onClick = { onEdit(task) },
                     )
+                }
+                // Overdue items otherwise just accumulate in red until the card becomes noise.
+                if (overdue > 0) {
+                    TextButton(onClick = onRescheduleOverdue) {
+                        Text("把 $overdue 项逾期挪到今天")
+                    }
                 }
             }
         }

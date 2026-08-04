@@ -1,6 +1,7 @@
 package com.zk.lifeos.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +36,8 @@ fun TaskRow(
     task: Task,
     today: LocalDate,
     modifier: Modifier = Modifier,
+    /** Where the task lives. Shown only outside its own project, where it's ambiguous. */
+    projectLabel: String? = null,
     onToggle: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
@@ -58,18 +61,30 @@ fun TaskRow(
                 .size(18.dp),
         )
         Spacer(Modifier.width(6.dp))
-        Text(
-            text = task.title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (task.done) scheme.onSurfaceVariant else scheme.onSurface,
-            textDecoration = if (task.done) TextDecoration.LineThrough else null,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+        Column(
             modifier = Modifier
                 .weight(1f)
                 .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .padding(vertical = 6.dp),
-        )
+        ) {
+            Text(
+                text = task.title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (task.done) scheme.onSurfaceVariant else scheme.onSurface,
+                textDecoration = if (task.done) TextDecoration.LineThrough else null,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (projectLabel != null) {
+                Text(
+                    text = projectLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = scheme.outline,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
         if (task.dueDate != null && !task.done) {
             Text(
                 text = dueLabel(task.dueDate, today),

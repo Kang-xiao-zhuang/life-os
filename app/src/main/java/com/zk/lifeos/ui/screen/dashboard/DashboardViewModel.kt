@@ -39,6 +39,10 @@ class DashboardViewModel(
     val projects: StateFlow<List<ProjectSummary>> = projectService.observeProjects()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** So the editor can warn when 今日最重要 is being spread across too many tasks. */
+    val mitCount: StateFlow<Int> = taskService.observeOpenMitCount()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     fun toggleTask(task: Task) = viewModelScope.launch { taskService.toggleDone(task) }
 
     fun saveTask(existing: Task?, draft: TaskDraft) = viewModelScope.launch {
@@ -65,4 +69,7 @@ class DashboardViewModel(
     fun deleteTask(id: Long) = viewModelScope.launch { taskService.delete(id) }
 
     fun toggleHabit(habitId: Long) = viewModelScope.launch { habitService.toggleToday(habitId) }
+
+    /** 把逾期的挪到今天 — clears the red backlog in one tap instead of task by task. */
+    fun rescheduleOverdue() = viewModelScope.launch { taskService.rescheduleOverdueToToday() }
 }

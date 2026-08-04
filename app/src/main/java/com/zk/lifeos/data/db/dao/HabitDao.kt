@@ -34,6 +34,21 @@ interface HabitDao {
     @Query("SELECT * FROM habit_checks WHERE date >= :from ORDER BY date ASC")
     fun observeChecksSince(from: Int): Flow<List<HabitCheckEntity>>
 
+    /**
+     * Check-ins per day over a range, counting only active habits — backs the month heatmap.
+     * Grouped in SQL so a month costs one small query instead of loading every row.
+     */
+    @Query(
+        """
+        SELECT habit_checks.date AS date, COUNT(*) AS count
+        FROM habit_checks
+        JOIN habits ON habits.id = habit_checks.habitId
+        WHERE habits.archived = 0 AND habit_checks.date BETWEEN :from AND :to
+        GROUP BY habit_checks.date
+        """
+    )
+    fun observeDailyCounts(from: Int, to: Int): Flow<List<DayCheckCount>>
+
     @Insert
     suspend fun insert(habit: HabitEntity): Long
 

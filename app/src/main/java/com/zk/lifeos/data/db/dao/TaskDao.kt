@@ -56,6 +56,42 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE id = :id LIMIT 1")
     suspend fun findById(id: Long): TaskEntity?
 
+    /**
+     * Every open task with the name of the project it belongs to.
+     *
+     * Backs the 「所有待办」 view: without it a task that has neither a due date nor the MIT flag is
+     * only reachable by opening its project, so it effectively disappears.
+     *
+     * Undated tasks sort last — a deadline is the only ordering the data actually gives us.
+     */
+    @Query(
+        """
+        SELECT t.*, p.name AS projectName, p.emoji AS projectEmoji
+        FROM tasks t LEFT JOIN projects p ON p.id = t.projectId
+        WHERE t.done = 0
+        ORDER BY t.dueDate IS NULL, t.dueDate ASC, t.isMit DESC, t.id ASC
+        """
+    )
+    fun observeAllOpenWithProject(): Flow<List<TaskWithProject>>
+
+    /** How many 今日最重要 are still open — used to warn when the flag is losing its meaning. */
+    @Query("SELECT COUNT(*) FROM tasks WHERE done = 0 AND isMit = 1")
+    fun observeOpenMitCount(): Flow<Int>
+
+    /**
+     * Drags every overdue task onto [today]. They are already late; letting them accumulate as a
+     * red backlog is how the list turns into noise the user stops reading.
+     *
+     * @return how many were moved.
+     */
+    @Query(
+        """
+        UPDATE tasks SET dueDate = :today, updatedAt = :now
+        WHERE done = 0 AND dueDate IS NOT NULL AND dueDate < :today
+        """
+    )
+    suspend fun rescheduleOverdueTo(today: Int, now: Long): Int
+
     @Insert
     suspend fun insert(task: TaskEntity): Long
 

@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zk.lifeos.model.ProjectSummary
 import com.zk.lifeos.model.Task
+import com.zk.lifeos.service.TaskService
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -56,6 +57,8 @@ fun TaskEditSheet(
     projects: List<ProjectSummary>,
     /** Pre-selected project when creating from inside a project. */
     defaultProjectId: Long? = null,
+    /** How many 今日最重要 are already open, so the sheet can say when it's becoming meaningless. */
+    currentMitCount: Int = 0,
     onDismiss: () -> Unit,
     onSave: (TaskDraft) -> Unit,
     onDelete: (() -> Unit)? = null,
@@ -125,11 +128,23 @@ fun TaskEditSheet(
             }
 
             // ---- MIT ----
-            FilterChip(
-                selected = isMit,
-                onClick = { isMit = !isMit },
-                label = { Text("今日最重要") },
-            )
+            // Advisory, never blocking: it's the user's day. But 「一天挑一到两件就够」 is the whole
+            // point of the flag, and nothing else in the app would ever mention it.
+            val othersFlagged = currentMitCount - if (existing?.isMit == true) 1 else 0
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                FilterChip(
+                    selected = isMit,
+                    onClick = { isMit = !isMit },
+                    label = { Text("今日最重要") },
+                )
+                if (isMit && othersFlagged >= TaskService.MIT_SOFT_LIMIT) {
+                    Text(
+                        text = "今天已经有 $othersFlagged 件最重要的事了 —— 都最重要就等于没有重点。",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
 
             // ---- project ----
             if (projects.isNotEmpty()) {

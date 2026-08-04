@@ -68,4 +68,7 @@ object Routes {
     const val ARG_PROJECT_ID = "projectId"
 
     fun projectDetail(projectId: Long) = "projects/$projectId"
+
+    /** Every open task, flat — for「我现在能做什么」without walking each project. */
+    const val ALL_TASKS = "tasks/all"
 }

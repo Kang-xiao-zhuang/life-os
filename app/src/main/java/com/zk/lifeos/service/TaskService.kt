@@ -2,6 +2,7 @@ package com.zk.lifeos.service
 
 import com.zk.lifeos.data.repository.TaskRepository
 import com.zk.lifeos.model.Task
+import com.zk.lifeos.model.TaskListItem
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -11,6 +12,23 @@ class TaskService(private val taskRepository: TaskRepository) {
     fun observeByProject(projectId: Long): Flow<List<Task>> = taskRepository.observeByProject(projectId)
 
     fun observeUnassigned(): Flow<List<Task>> = taskRepository.observeUnassigned()
+
+    /** Every open task, wherever it lives — answers「我现在能做什么」in one screen. */
+    fun observeAllOpen(): Flow<List<TaskListItem>> = taskRepository.observeAllOpen()
+
+    fun observeOpenMitCount(): Flow<Int> = taskRepository.observeOpenMitCount()
+
+    /**
+     * 「把逾期的挪到今天」. They are already late, and a growing red backlog is how the list stops
+     * being read at all. Reversible by editing any individual task.
+     */
+    suspend fun rescheduleOverdueToToday(): Int =
+        taskRepository.rescheduleOverdueTo(LocalDate.now())
+
+    companion object {
+        /** 一天挑一到两件就够 — beyond this the flag stops meaning anything. Advisory, not enforced. */
+        const val MIT_SOFT_LIMIT = 2
+    }
 
     /** Returns false when the title is blank. */
     suspend fun create(

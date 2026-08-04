@@ -8,6 +8,7 @@ import com.zk.lifeos.service.ProjectService
 import com.zk.lifeos.service.TaskService
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -22,6 +23,11 @@ class ProjectsViewModel(
     /** Tasks captured without a project — shown at the bottom so they don't get lost. */
     val unassigned: StateFlow<List<Task>> = taskService.observeUnassigned()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Drives the 「所有待办」 entry; hidden when there is nothing open. */
+    val openTaskCount: StateFlow<Int> = taskService.observeAllOpen()
+        .map { it.size }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     fun createProject(name: String, emoji: String) =
         viewModelScope.launch { projectService.create(name, emoji) }

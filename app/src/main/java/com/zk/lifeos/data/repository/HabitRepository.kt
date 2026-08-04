@@ -3,11 +3,13 @@ package com.zk.lifeos.data.repository
 import com.zk.lifeos.data.db.dao.HabitDao
 import com.zk.lifeos.data.db.entity.HabitCheckEntity
 import com.zk.lifeos.data.db.entity.HabitEntity
+import com.zk.lifeos.model.HabitMonth
 import com.zk.lifeos.model.HabitToday
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.temporal.TemporalAdjusters
 
 class HabitRepository(private val habitDao: HabitDao) {
@@ -44,6 +46,28 @@ class HabitRepository(private val habitDao: HabitDao) {
                     week = (0..6).map { offset -> weekStart.plusDays(offset.toLong()).toEpochDayInt() in dates },
                 )
             }
+        }
+    }
+
+    /**
+     * One month of check-in counts for the heatmap. The denominator is today's active habit
+     * count — an approximation, but the alternative (reconstructing how many habits existed on
+     * each past day) buys precision nobody looking at a heatmap needs.
+     */
+    fun observeMonth(month: YearMonth): Flow<HabitMonth> {
+        val from = month.atDay(1)
+        val to = month.atEndOfMonth()
+        return combine(
+            habitDao.observeDailyCounts(from.toEpochDayInt(), to.toEpochDayInt()),
+            habitDao.observeActiveCount(),
+        ) { counts, habitCount ->
+            HabitMonth(
+                month = month,
+                checksByDay = counts.associate { row ->
+                    row.date.toLocalDate().dayOfMonth to row.count
+                },
+                habitCount = habitCount,
+            )
         }
     }
 

@@ -3,6 +3,7 @@ package com.zk.lifeos.data.repository
 import com.zk.lifeos.data.db.dao.TaskDao
 import com.zk.lifeos.data.db.entity.TaskEntity
 import com.zk.lifeos.model.Task
+import com.zk.lifeos.model.TaskListItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -23,6 +24,16 @@ class TaskRepository(private val taskDao: TaskDao) {
 
     fun observeUnassigned(): Flow<List<Task>> =
         taskDao.observeUnassigned().map { list -> list.map { it.toModel() } }
+
+    /** Every open task, each carrying its project name — for the 「所有待办」 view. */
+    fun observeAllOpen(): Flow<List<TaskListItem>> =
+        taskDao.observeAllOpenWithProject().map { rows -> rows.map { it.toModel() } }
+
+    fun observeOpenMitCount(): Flow<Int> = taskDao.observeOpenMitCount()
+
+    /** Moves every overdue task to [today]. Returns how many moved. */
+    suspend fun rescheduleOverdueTo(today: LocalDate): Int =
+        taskDao.rescheduleOverdueTo(today.toEpochDayInt(), System.currentTimeMillis())
 
     suspend fun create(
         title: String,

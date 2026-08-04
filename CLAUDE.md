@@ -148,10 +148,27 @@ Considered and dropped: **weather on the Dashboard**. It needs `INTERNET`, which
 「不联网 · 零权限」claim that the About card makes. (A keyless source — open-meteo — was verified
 reachable, so this stays possible if the trade is ever worth making.)
 
+**Second round of PM fixes (2026-08-04)**
+
+- **所有待办** (`ui/screen/tasks/`, route `tasks/all`, entry at the top of Projects) — every open
+  task in one flat list, grouped 已经逾期 / 今天到期 / 以后 / 没有日期. Exists because Dashboard
+  only shows what's due today or flagged MIT: a task with neither was reachable only by opening its
+  project, so「我现在能做什么」cost one tap per project. Each row shows which project it's in
+  (`TaskRow(projectLabel = …)`), because outside its project a bare title is ambiguous.
+- **习惯月历热力图** (`ui/screen/habits/HabitHeatmap.kt`) — a month of check-ins, Monday first,
+  shaded by *completion* (checked ÷ active habits) rather than a raw count, so a day means the same
+  thing whether you track two habits or eight. Pages back through months; forward stops at the
+  current one. Built from plain `Row`s — a lazy grid inside the scrolling column would fight the
+  parent for gestures. Card title is neutral (`月度打卡`) since it can show any month.
+- **MIT 软上限** (`TaskService.MIT_SOFT_LIMIT = 2`) — the editor warns when a third task is flagged
+  今日最重要, and never blocks. The spec says 一天挑一到两件就够 but nothing else in the app would
+  ever have mentioned it.
+- **逾期批量处理** — 「把 N 项逾期挪到今天」on Dashboard and in 所有待办. Overdue items otherwise
+  accumulate as red text until the card becomes noise the user stops reading.
+
 Still open, only if it earns its place: Markdown *rendering* for journal entries (text is already
-stored verbatim), an attachments feature (the backup format already carries them), reminders
-(would need `POST_NOTIFICATIONS`, same zero-permission trade-off as weather), an "all open tasks"
-view, and a habit month heatmap.
+stored verbatim), an attachments feature (the backup format already carries them), and reminders
+(would need `POST_NOTIFICATIONS`, same zero-permission trade-off as weather).
 
 ### Verifying on the emulator
 

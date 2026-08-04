@@ -29,6 +29,10 @@ class ProjectDetailViewModel(
     val projects: StateFlow<List<ProjectSummary>> = projectService.observeProjects()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** So the editor can warn when 今日最重要 is being spread across too many tasks. */
+    val mitCount: StateFlow<Int> = taskService.observeOpenMitCount()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     fun toggleTask(task: Task) = viewModelScope.launch { taskService.toggleDone(task) }
 
     fun saveTask(existing: Task?, draft: TaskDraft) = viewModelScope.launch {

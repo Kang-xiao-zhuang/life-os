@@ -1,14 +1,21 @@
 package com.zk.lifeos.service
 
 import com.zk.lifeos.data.repository.HabitRepository
+import com.zk.lifeos.model.HabitMonth
 import com.zk.lifeos.model.HabitToday
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
+import java.time.YearMonth
 
 /** 习惯 + 每日打卡. */
 class HabitService(private val habitRepository: HabitRepository) {
 
     fun observeToday(): Flow<List<HabitToday>> = habitRepository.observeToday(LocalDate.now())
+
+    /** One month of check-ins for the heatmap — 「这个月坚持得怎么样」. */
+    fun observeMonth(month: YearMonth): Flow<HabitMonth> = habitRepository.observeMonth(month)
+
+    fun currentMonth(): YearMonth = YearMonth.from(LocalDate.now())
 
     suspend fun create(name: String, emoji: String): Boolean {
         val clean = name.trim()

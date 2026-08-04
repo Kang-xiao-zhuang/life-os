@@ -37,6 +37,7 @@ private val weekdayLabels = listOf("一", "二", "三", "四", "五", "六", "�
 fun HabitsScreen(modifier: Modifier = Modifier) {
     val viewModel: HabitsViewModel = viewModel(factory = LifeOsViewModelFactory.Factory)
     val habits by viewModel.habits.collectAsStateWithLifecycle()
+    val month by viewModel.month.collectAsStateWithLifecycle()
     val checkedToday = habits.count { it.checkedToday }
 
     var creating by remember { mutableStateOf(false) }
@@ -65,6 +66,15 @@ fun HabitsScreen(modifier: Modifier = Modifier) {
                     }
                     EmptyHint("点一下打卡,再点一下取消;长按可以编辑。")
                 }
+            }
+
+            // Neutral title: the card can be paged back to earlier months, so「这个月」would lie.
+            SectionCard(title = "月度打卡") {
+                HabitHeatmap(
+                    month = month,
+                    onPreviousMonth = viewModel::showPreviousMonth,
+                    onNextMonth = viewModel::showNextMonth,
+                )
             }
         }
     }

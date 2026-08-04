@@ -15,6 +15,7 @@ import com.zk.lifeos.ui.screen.habits.HabitsViewModel
 import com.zk.lifeos.ui.screen.journal.JournalViewModel
 import com.zk.lifeos.ui.screen.projects.ProjectsViewModel
 import com.zk.lifeos.ui.screen.settings.SettingsViewModel
+import com.zk.lifeos.ui.screen.tasks.AllTasksViewModel
 
 /**
  * ViewModel construction without a DI framework: each initializer pulls what it needs out of
@@ -35,6 +36,7 @@ object LifeOsViewModelFactory {
             )
         }
         initializer { ProjectsViewModel(container.projectService, container.taskService) }
+        initializer { AllTasksViewModel(container.taskService, container.projectService) }
         initializer { HabitsViewModel(container.habitService) }
         initializer { JournalViewModel(container.journalService) }
         initializer { CaptureViewModel(container.captureService) }
