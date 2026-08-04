@@ -1,6 +1,8 @@
 package com.zk.lifeos.data.repository
 
 import com.zk.lifeos.data.db.dao.HabitDao
+import com.zk.lifeos.data.db.entity.HabitCheckEntity
+import com.zk.lifeos.data.db.entity.HabitEntity
 import com.zk.lifeos.model.HabitToday
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -42,6 +44,38 @@ class HabitRepository(private val habitDao: HabitDao) {
                     week = (0..6).map { offset -> weekStart.plusDays(offset.toLong()).toEpochDayInt() in dates },
                 )
             }
+        }
+    }
+
+    suspend fun create(name: String, emoji: String): Long =
+        habitDao.insert(
+            HabitEntity(
+                name = name,
+                emoji = emoji,
+                sortOrder = habitDao.nextSortOrder(),
+                createdAt = System.currentTimeMillis(),
+            )
+        )
+
+    suspend fun rename(id: Long, name: String, emoji: String) = habitDao.rename(id, name, emoji)
+
+    /** Deleting a habit also removes its check-ins (foreign key cascade). */
+    suspend fun delete(id: Long) = habitDao.delete(id)
+
+    /**
+     * Tapping a habit toggles today: check it, or take the check back off if it was a mistake.
+     * Returns the new state so the caller can react without re-querying.
+     */
+    suspend fun toggleCheck(habitId: Long, date: LocalDate): Boolean {
+        val day = date.toEpochDayInt()
+        return if (habitDao.isChecked(habitId, day) > 0) {
+            habitDao.deleteCheck(habitId, day)
+            false
+        } else {
+            habitDao.insertCheck(
+                HabitCheckEntity(habitId = habitId, date = day, createdAt = System.currentTimeMillis())
+            )
+            true
         }
     }
 

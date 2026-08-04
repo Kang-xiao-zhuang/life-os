@@ -9,42 +9,110 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.model.HabitToday
 import com.zk.lifeos.ui.LifeOsViewModelFactory
+import com.zk.lifeos.ui.components.ConfirmDialog
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.HabitRow
+import com.zk.lifeos.ui.components.LifeOsFab
 import com.zk.lifeos.ui.components.LifeOsScreen
-import com.zk.lifeos.ui.components.PhaseNote
+import com.zk.lifeos.ui.components.NameEmojiDialog
 import com.zk.lifeos.ui.components.SectionCard
+import com.zk.lifeos.ui.components.habitEmojis
 
 private val weekdayLabels = listOf("一", "二", "三", "四", "五", "六", "日")
 
-/** 习惯 — daily check-ins, current streak, and this week at a glance. */
+/**
+ * 习惯 — tap a row to check today off (tap again to undo), long-press to edit or delete.
+ */
 @Composable
 fun HabitsScreen(modifier: Modifier = Modifier) {
     val viewModel: HabitsViewModel = viewModel(factory = LifeOsViewModelFactory.Factory)
     val habits by viewModel.habits.collectAsStateWithLifecycle()
     val checkedToday = habits.count { it.checkedToday }
 
-    LifeOsScreen(title = "习惯", modifier = modifier) {
+    var creating by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf<HabitToday?>(null) }
+    var deleting by remember { mutableStateOf<HabitToday?>(null) }
+
+    LifeOsScreen(
+        title = "习惯",
+        modifier = modifier,
+        floatingActionButton = { LifeOsFab("新习惯") { creating = true } },
+    ) {
         if (habits.isEmpty()) {
             SectionCard(title = "还没有习惯") {
                 EmptyHint("每天坚持的小事:📚 阅读 · 🏋 健身 · ✍ 写作 · 🎥 内容创作 · 🇬🇧 英语学习。")
             }
         } else {
             SectionCard(title = "今天", trailing = "$checkedToday / ${habits.size}") {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     WeekdayHeader()
-                    habits.forEach { HabitRow(habit = it) }
+                    habits.forEach { habit ->
+                        HabitRow(
+                            habit = habit,
+                            onToggle = { viewModel.toggleToday(habit.id) },
+                            onLongClick = { editing = habit },
+                        )
+                    }
+                    EmptyHint("点一下打卡,再点一下取消;长按可以编辑。")
                 }
             }
         }
+    }
 
-        PhaseNote("Phase 3 会接上:新建习惯、每日打卡、编辑与删除。")
+    if (creating) {
+        NameEmojiDialog(
+            title = "新建习惯",
+            label = "习惯名称",
+            emojiOptions = habitEmojis,
+            confirmText = "创建",
+            onDismiss = { creating = false },
+            onConfirm = { name, emoji ->
+                viewModel.create(name, emoji)
+                creating = false
+            },
+        )
+    }
+
+    editing?.let { habit ->
+        NameEmojiDialog(
+            title = "编辑习惯",
+            label = "习惯名称",
+            emojiOptions = habitEmojis,
+            initialName = habit.name,
+            initialEmoji = habit.emoji,
+            destructiveText = "删除",
+            onDestructive = {
+                editing = null
+                deleting = habit
+            },
+            onDismiss = { editing = null },
+            onConfirm = { name, emoji ->
+                viewModel.rename(habit.id, name, emoji)
+                editing = null
+            },
+        )
+    }
+
+    deleting?.let { habit ->
+        ConfirmDialog(
+            title = "删除「${habit.name}」?",
+            message = "它的打卡记录会一起删掉,这个动作没法撤销。",
+            onDismiss = { deleting = null },
+            onConfirm = {
+                viewModel.delete(habit.id)
+                deleting = null
+            },
+        )
     }
 }
 

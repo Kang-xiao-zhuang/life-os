@@ -37,7 +37,24 @@ interface HabitDao {
     @Insert
     suspend fun insert(habit: HabitEntity): Long
 
+    @Query("UPDATE habits SET name = :name, emoji = :emoji WHERE id = :id")
+    suspend fun rename(id: Long, name: String, emoji: String)
+
+    /** Deleting a habit cascades its check-ins (declared on [HabitCheckEntity]). */
+    @Query("DELETE FROM habits WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM habits")
+    suspend fun nextSortOrder(): Int
+
     /** The (habitId, date) unique index makes a repeated tap a no-op instead of a duplicate. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCheck(check: HabitCheckEntity): Long
+
+    /** Un-checking: tapping a checked habit should take it back off, not add a second row. */
+    @Query("DELETE FROM habit_checks WHERE habitId = :habitId AND date = :date")
+    suspend fun deleteCheck(habitId: Long, date: Int)
+
+    @Query("SELECT COUNT(*) FROM habit_checks WHERE habitId = :habitId AND date = :date")
+    suspend fun isChecked(habitId: Long, date: Int): Int
 }

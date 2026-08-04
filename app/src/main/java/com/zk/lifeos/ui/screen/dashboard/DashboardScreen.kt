@@ -10,27 +10,38 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zk.lifeos.model.DashboardSnapshot
+import com.zk.lifeos.model.Task
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.HabitRow
+import com.zk.lifeos.ui.components.LifeOsFab
 import com.zk.lifeos.ui.components.LifeOsScreen
-import com.zk.lifeos.ui.components.PhaseNote
 import com.zk.lifeos.ui.components.SectionCard
+import com.zk.lifeos.ui.components.TaskEditSheet
 import com.zk.lifeos.ui.components.TaskRow
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
+/** Which editor the screen currently has open. */
+private sealed interface Editor {
+    data object None : Editor
+    data object New : Editor
+    data class Edit(val task: Task) : Editor
+}
+
 /**
  * 首页 — the page opened most often, so it answers「今天要做什么」and nothing else.
  *
- * Phase 2 lays out the five sections from the spec against real data. Creating / completing /
- * checking in arrive in Phase 3, so nothing here is tappable except navigation.
+ * Everything here is now live: tick a task, check off a habit, tap a task to edit it.
  */
 @Composable
 fun DashboardScreen(
@@ -42,6 +53,8 @@ fun DashboardScreen(
 ) {
     val viewModel: DashboardViewModel = viewModel(factory = LifeOsViewModelFactory.Factory)
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val projects by viewModel.projects.collectAsStateWithLifecycle()
+    var editor by remember { mutableStateOf<Editor>(Editor.None) }
 
     LifeOsScreen(
         title = "LifeOS",
@@ -52,12 +65,25 @@ fun DashboardScreen(
                 Icon(Icons.Outlined.Settings, contentDescription = "设置")
             }
         },
+        floatingActionButton = { LifeOsFab("新任务") { editor = Editor.New } },
     ) {
         DateHeader(state.today)
 
-        MitCard(state)
-        TodayTasksCard(state)
-        HabitsCard(state, onOpenHabits)
+        MitCard(
+            state = state,
+            onToggle = viewModel::toggleTask,
+            onEdit = { editor = Editor.Edit(it) },
+        )
+        TodayTasksCard(
+            state = state,
+            onToggle = viewModel::toggleTask,
+            onEdit = { editor = Editor.Edit(it) },
+        )
+        HabitsCard(
+            state = state,
+            onOpenHabits = onOpenHabits,
+            onToggleHabit = viewModel::toggleHabit,
+        )
 
         SectionCard(
             title = "快速记录",
@@ -80,8 +106,32 @@ fun DashboardScreen(
                 }
             )
         }
+    }
 
-        PhaseNote("Phase 3 会接上:新建任务、完成任务、习惯打卡、写复盘。")
+    when (val current = editor) {
+        Editor.None -> Unit
+        Editor.New -> TaskEditSheet(
+            existing = null,
+            projects = projects,
+            onDismiss = { editor = Editor.None },
+            onSave = { draft ->
+                viewModel.saveTask(null, draft)
+                editor = Editor.None
+            },
+        )
+        is Editor.Edit -> TaskEditSheet(
+            existing = current.task,
+            projects = projects,
+            onDismiss = { editor = Editor.None },
+            onSave = { draft ->
+                viewModel.saveTask(current.task, draft)
+                editor = Editor.None
+            },
+            onDelete = {
+                viewModel.deleteTask(current.task.id)
+                editor = Editor.None
+            },
+        )
     }
 }
 
@@ -104,51 +154,94 @@ private fun DateHeader(today: LocalDate) {
 
 /** 今日最重要任务 — first, because it is the one thing that must happen today. */
 @Composable
-private fun MitCard(state: DashboardSnapshot) {
-    SectionCard(title = "今日最重要", trailing = if (state.mit.isEmpty()) null else "${state.mit.size} 项") {
+private fun MitCard(
+    state: DashboardSnapshot,
+    onToggle: (Task) -> Unit,
+    onEdit: (Task) -> Unit,
+) {
+    val open = state.mit.count { !it.done }
+    SectionCard(
+        title = "今日最重要",
+        // Counts what is still to do; finished ones stay listed but shouldn't inflate the number.
+        trailing = when {
+            state.mit.isEmpty() -> null
+            open == 0 -> "都做完了"
+            else -> "$open 项"
+        },
+    ) {
         if (state.mit.isEmpty()) {
-            EmptyHint("还没有标记最重要的事。一天挑一到两件就够。")
+            EmptyHint("还没有标记最重要的事。新建任务时勾上「今日最重要」,一天挑一到两件就够。")
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                state.mit.forEach { TaskRow(task = it, today = state.today) }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                state.mit.forEach { task ->
+                    TaskRow(
+                        task = task,
+                        today = state.today,
+                        onToggle = { onToggle(task) },
+                        onClick = { onEdit(task) },
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun TodayTasksCard(state: DashboardSnapshot) {
+private fun TodayTasksCard(
+    state: DashboardSnapshot,
+    onToggle: (Task) -> Unit,
+    onEdit: (Task) -> Unit,
+) {
     val overdue = state.dueToday.count { it.isOverdue(state.today) }
+    val open = state.dueToday.count { !it.done }
     SectionCard(
         title = "今日任务",
         trailing = when {
             state.dueToday.isEmpty() -> null
-            overdue > 0 -> "${state.dueToday.size} 项 · 逾期 $overdue"
-            else -> "${state.dueToday.size} 项"
+            overdue > 0 -> "$open 项 · 逾期 $overdue"
+            open == 0 -> "都做完了"
+            else -> "$open 项"
         },
     ) {
         if (state.dueToday.isEmpty()) {
-            EmptyHint("今天没有到期的任务。")
+            // MIT tasks are filtered out of this list, so "nothing due" would be a lie when the
+            // only thing due today is already featured above.
+            EmptyHint(
+                if (state.mit.isEmpty()) "今天没有到期的任务。" else "今天到期的都在上面了。"
+            )
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                state.dueToday.forEach { TaskRow(task = it, today = state.today) }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                state.dueToday.forEach { task ->
+                    TaskRow(
+                        task = task,
+                        today = state.today,
+                        onToggle = { onToggle(task) },
+                        onClick = { onEdit(task) },
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun HabitsCard(state: DashboardSnapshot, onOpenHabits: () -> Unit) {
+private fun HabitsCard(
+    state: DashboardSnapshot,
+    onOpenHabits: () -> Unit,
+    onToggleHabit: (Long) -> Unit,
+) {
     SectionCard(
         title = "今日习惯",
         trailing = if (state.habits.isEmpty()) null else "${state.habitsCheckedToday} / ${state.habits.size}",
         onClick = onOpenHabits,
     ) {
         if (state.habits.isEmpty()) {
-            EmptyHint("还没有习惯。阅读、健身、写作、英语…先加一个。")
+            EmptyHint("还没有习惯。阅读、健身、写作、英语…去习惯页加一个。")
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                state.habits.take(4).forEach { HabitRow(habit = it) }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                state.habits.take(4).forEach { habit ->
+                    HabitRow(habit = habit, onToggle = { onToggleHabit(habit.id) })
+                }
                 if (state.habits.size > 4) {
                     EmptyHint("还有 ${state.habits.size - 4} 个,点开查看全部。")
                 }

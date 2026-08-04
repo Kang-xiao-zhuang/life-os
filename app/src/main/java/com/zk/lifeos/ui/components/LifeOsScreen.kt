@@ -28,11 +28,13 @@ fun LifeOsScreen(
     modifier: Modifier = Modifier,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = Color.Transparent,
+        floatingActionButton = floatingActionButton,
         topBar = {
             TopAppBar(
                 title = { Text(title) },
@@ -48,7 +50,8 @@ fun LifeOsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp),
+                // Enough clearance that the add button never sits on top of the last card.
+                .padding(bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             content()

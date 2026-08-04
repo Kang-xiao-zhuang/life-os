@@ -8,9 +8,9 @@ import java.time.LocalDate
  */
 data class DashboardSnapshot(
     val today: LocalDate,
-    /** 今日最重要任务 */
+    /** 今日最重要任务 — open ones first, then any finished today. */
     val mit: List<Task> = emptyList(),
-    /** Due today or overdue. */
+    /** Due today or overdue, plus anything finished today. */
     val dueToday: List<Task> = emptyList(),
     val habits: List<HabitToday> = emptyList(),
     val journal: JournalEntry = JournalEntry(date = LocalDate.now()),

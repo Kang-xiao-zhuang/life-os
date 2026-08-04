@@ -6,9 +6,6 @@ import androidx.room.Query
 import com.zk.lifeos.data.db.entity.ProjectEntity
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Read-side only so far. Create / edit / delete land in Phase 3 (项目管理).
- */
 @Dao
 interface ProjectDao {
 
@@ -36,4 +33,18 @@ interface ProjectDao {
 
     @Insert
     suspend fun insert(project: ProjectEntity): Long
+
+    @Query("UPDATE projects SET name = :name, emoji = :emoji, updatedAt = :now WHERE id = :id")
+    suspend fun rename(id: Long, name: String, emoji: String, now: Long)
+
+    /**
+     * Archive instead of delete: a project's tasks and history stay, it just leaves the lists.
+     * Nothing the user recorded is destroyed by tidying up.
+     */
+    @Query("UPDATE projects SET archived = :archived, updatedAt = :now WHERE id = :id")
+    suspend fun setArchived(id: Long, archived: Boolean, now: Long)
+
+    /** Next free slot at the end of the manual ordering. */
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM projects")
+    suspend fun nextSortOrder(): Int
 }

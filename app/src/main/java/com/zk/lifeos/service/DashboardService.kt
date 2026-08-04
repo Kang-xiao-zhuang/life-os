@@ -24,16 +24,19 @@ class DashboardService(
     fun observe(): Flow<DashboardSnapshot> {
         val today = LocalDate.now()
         return combine(
-            taskRepository.observeMit(),
+            taskRepository.observeMit(today),
             taskRepository.observeDueBy(today),
             habitRepository.observeToday(today),
             journalRepository.observeByDate(today),
             captureRepository.observeInbox().map { it.size },
         ) { mit, dueToday, habits, journal, inboxCount ->
+            val mitIds = mit.mapTo(mutableSetOf()) { it.id }
             DashboardSnapshot(
                 today = today,
                 mit = mit,
-                dueToday = dueToday,
+                // A task flagged MIT is already called out above; listing it again in 今日任务
+                // would make the same line appear twice on a screen meant to be minimal.
+                dueToday = dueToday.filterNot { it.id in mitIds },
                 habits = habits,
                 journal = journal,
                 inboxCount = inboxCount,

@@ -1,8 +1,8 @@
 package com.zk.lifeos.data.db.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Upsert
 import com.zk.lifeos.data.db.entity.JournalEntryEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -19,7 +19,34 @@ interface JournalDao {
     @Query("SELECT COUNT(*) FROM journal_entries")
     fun observeCount(): Flow<Int>
 
-    /** Upsert keyed on the unique date index — editing today's entry never creates a second row. */
-    @Upsert
-    suspend fun upsert(entry: JournalEntryEntity)
+    /**
+     * Deliberately NOT `@Upsert`. Room's upsert falls back to updating by PRIMARY KEY when the
+     * insert conflicts — but the conflict here would be on the unique `date` index, so that
+     * fallback would update nothing and silently drop what the user wrote. The repository looks
+     * the row up by date first and then picks insert or update explicitly.
+     */
+    @Query("SELECT * FROM journal_entries WHERE date = :date LIMIT 1")
+    suspend fun findByDate(date: Int): JournalEntryEntity?
+
+    @Insert
+    suspend fun insert(entry: JournalEntryEntity): Long
+
+    @Query(
+        """
+        UPDATE journal_entries
+        SET done = :done, win = :win, problems = :problems, tomorrowMit = :tomorrowMit, updatedAt = :now
+        WHERE id = :id
+        """
+    )
+    suspend fun update(
+        id: Long,
+        done: String,
+        win: String,
+        problems: String,
+        tomorrowMit: String,
+        now: Long,
+    )
+
+    @Query("DELETE FROM journal_entries WHERE id = :id")
+    suspend fun delete(id: Long)
 }

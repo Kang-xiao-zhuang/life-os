@@ -26,8 +26,15 @@ private val CreationExtras.container: AppContainer
 object LifeOsViewModelFactory {
 
     val Factory = viewModelFactory {
-        initializer { DashboardViewModel(container.dashboardService) }
-        initializer { ProjectsViewModel(container.projectService) }
+        initializer {
+            DashboardViewModel(
+                dashboardService = container.dashboardService,
+                projectService = container.projectService,
+                taskService = container.taskService,
+                habitService = container.habitService,
+            )
+        }
+        initializer { ProjectsViewModel(container.projectService, container.taskService) }
         initializer { HabitsViewModel(container.habitService) }
         initializer { JournalViewModel(container.journalService) }
         initializer { CaptureViewModel(container.captureService) }

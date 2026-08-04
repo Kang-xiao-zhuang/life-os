@@ -76,8 +76,8 @@ the bottom bar hides on it.
 
 ## Status
 
-**Phase 1 (项目初始化) + Phase 2 (基础页面) done** — builds, installs, runs; every screen
-verified by screenshot on the emulator, with data and empty.
+**Phase 1 (项目初始化) + Phase 2 (基础页面) + Phase 3 (核心功能) done** — builds, installs, runs;
+every screen verified on the emulator, and all 18 write-path checks pass end to end.
 
 - Full V1 schema declared up front (6 tables: projects / tasks / habits / habit_checks /
   journal_entries / captures), so Phase 3 does not churn through Room migrations.
@@ -87,14 +87,29 @@ verified by screenshot on the emulator, with data and empty.
   快速记录 / 今日复盘), Projects (progress + 未归类), Project detail = the task list,
   Habits (streak + week dots), Journal (today's four prompts + history), Capture (inbox).
 - Streaks and the week grid are **computed from check-ins, never stored**, so they cannot drift.
-- Read-side only: `PhaseNote(...)` at the bottom of each screen states what Phase 3 adds.
-  Non-working controls are deliberately **not rendered** — a task's leading circle is a status
-  icon, not a checkbox. Delete each `PhaseNote` as its feature lands.
+- Phase 3 made it all live: create/edit/delete tasks (title, notes, due date, MIT, project),
+  create/rename projects (archive, never delete), create/rename/delete habits, tap-to-check-in,
+  capture → task, and the journal editor. The `PhaseNote` placeholders are gone.
 
-Next: **Phase 3 (核心功能)** — 项目管理 / 任务管理 / 习惯打卡 / 快速记录 / 每日复盘, i.e. the
-write paths + the controls that go with them. Then Phase 4 (数据管理: 导出/导入 + real migrations).
+**Behaviours worth not breaking**
 
-### Verifying a layout without shipping fake data
+- A ticked task **stays on Dashboard for the rest of the day** (struck through, sorted last).
+  It used to vanish instantly, which made a mis-tap impossible to undo where it happened.
+  The queries are `done = 0 OR completedAt >= todayMidnight`.
+- 今日任务 **excludes MIT tasks** — they are already featured above, and listing them twice on a
+  minimal screen looked like a bug. Filtered in `DashboardService`, so the queries stay generic.
+- Saving an **emptied** journal entry deletes the row rather than storing a blank one, so
+  「未写」and「写了又清空」don't look different.
+- Reopening a task clears `completedAt`, so "finished today" stays truthful.
+- Habit tap **toggles** today's check-in; tapping again removes it. Streaks tolerate an unchecked
+  today (measured from yesterday) because the day isn't over.
+- `JournalViewModel` owns the edit draft. A `remember`-ed local copy would be seeded from the
+  empty placeholder before the DB emits and then never refresh — blank fields over saved text.
+
+Next: **Phase 4 (数据管理)** — 导出 / 导入 (`LifeOS_Backup.zip`), settings, and **real Room
+migrations** (see the warning below).
+
+### Verifying on the emulator
 
 The app never seeds sample data. To eyeball a screen with content, insert rows straight into the
 app's database and delete them afterwards:
@@ -105,6 +120,20 @@ adb shell "run-as com.zk.lifeos.debug sqlite3 /data/data/com.zk.lifeos.debug/dat
 
 `run-as` reaches the private data dir without root, and `sqlite3` is on the emulator image.
 Dates are epoch days, timestamps epoch millis.
+
+**Driving the UI from the CLI** — worth reusing, and worth not re-learning the hard way:
+
+- Locate widgets with `adb shell uiautomator dump` and tap the centre of the matching node.
+  Blind pixel taps drift as soon as a layout differs (the FAB sits lower on screens with no
+  bottom bar).
+- **Never** send `keyevent 111` (ESCAPE) or `4` (BACK) to dismiss the keyboard — both close the
+  open dialog too, which silently invalidates the whole run. The emulator has a hardware
+  keyboard, so the soft IME never covers the layout anyway.
+- Screen titles and bottom-nav labels use the same words (项目 / 习惯 / 记录 / 复盘). Match nav
+  items by position near the bottom edge, or the title wins and nothing happens.
+- The dump can be **stale** right after a navigation — poll until the expected text appears
+  rather than sleeping a fixed time, and assert the expected screen before continuing.
+- `adb shell input text` is ASCII-only; use Latin text for automated entry.
 
 ### 🔴 Must fix before the app holds real data
 

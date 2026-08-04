@@ -17,4 +17,14 @@ interface CaptureDao {
 
     @Insert
     suspend fun insert(capture: CaptureEntity): Long
+
+    /**
+     * Triaged into a task — kept rather than deleted, so the inbox stays a record of what was
+     * captured instead of losing it on conversion.
+     */
+    @Query("UPDATE captures SET processed = 1 WHERE id = :id")
+    suspend fun markProcessed(id: Long)
+
+    @Query("DELETE FROM captures WHERE id = :id")
+    suspend fun delete(id: Long)
 }

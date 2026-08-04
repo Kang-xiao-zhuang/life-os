@@ -15,6 +15,7 @@ import com.zk.lifeos.service.HabitService
 import com.zk.lifeos.service.JournalService
 import com.zk.lifeos.service.ProjectService
 import com.zk.lifeos.service.SettingsService
+import com.zk.lifeos.service.TaskService
 
 /**
  * Hand-rolled dependency container — a plain object graph built once at startup.
@@ -60,11 +61,13 @@ class AppContainer(context: Context) {
         )
     }
 
-    val projectService: ProjectService by lazy { ProjectService(projectRepository, taskRepository) }
+    val projectService: ProjectService by lazy { ProjectService(projectRepository) }
+
+    val taskService: TaskService by lazy { TaskService(taskRepository) }
 
     val habitService: HabitService by lazy { HabitService(habitRepository) }
 
     val journalService: JournalService by lazy { JournalService(journalRepository) }
 
-    val captureService: CaptureService by lazy { CaptureService(captureRepository) }
+    val captureService: CaptureService by lazy { CaptureService(captureRepository, taskRepository) }
 }

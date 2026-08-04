@@ -22,6 +22,10 @@ internal fun Int.toLocalDate(): LocalDate = LocalDate.ofEpochDay(toLong())
 
 internal fun LocalDate.toEpochDayInt(): Int = toEpochDay().toInt()
 
+/** Local midnight as epoch millis — used to ask "was this finished today?". */
+internal fun LocalDate.startOfDayMillis(): Long =
+    atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
 internal fun Long.toLocalDateTime(): LocalDateTime =
     LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
 
