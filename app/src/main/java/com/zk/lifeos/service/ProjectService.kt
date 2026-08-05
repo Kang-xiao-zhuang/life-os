@@ -28,4 +28,18 @@ class ProjectService(private val projectRepository: ProjectRepository) {
     }
 
     suspend fun archive(id: Long) = projectRepository.setArchived(id, archived = true)
+
+    // ---- 已归档 ----
+
+    fun observeArchived(): Flow<List<ProjectSummary>> = projectRepository.observeArchived()
+
+    fun observeArchivedCount(): Flow<Int> = projectRepository.observeArchivedCount()
+
+    suspend fun restore(id: Long) = projectRepository.setArchived(id, archived = false)
+
+    /**
+     * The only permanent delete for projects, and only reachable from the archive — so losing a
+     * project always takes two deliberate steps. Its tasks survive as 未归类.
+     */
+    suspend fun deletePermanently(id: Long) = projectRepository.deletePermanently(id)
 }

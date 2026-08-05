@@ -3,6 +3,7 @@ package com.zk.lifeos.ui.screen.tasks
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zk.lifeos.model.ProjectSummary
+import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.model.TaskListItem
 import com.zk.lifeos.service.ProjectService
@@ -43,5 +44,13 @@ class AllTasksViewModel(
 
     fun deleteTask(id: Long) = viewModelScope.launch { taskService.delete(id) }
 
-    fun rescheduleOverdue() = viewModelScope.launch { taskService.rescheduleOverdueToToday() }
+    /** Reports what moved so the screen can offer an undo — see DashboardViewModel for why. */
+    fun rescheduleOverdue(onMoved: (List<RescheduledTask>) -> Unit) = viewModelScope.launch {
+        val moved = taskService.rescheduleOverdueToToday()
+        if (moved.isNotEmpty()) onMoved(moved)
+    }
+
+    fun undoReschedule(moved: List<RescheduledTask>) = viewModelScope.launch {
+        taskService.undoReschedule(moved)
+    }
 }

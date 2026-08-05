@@ -79,18 +79,23 @@ interface TaskDao {
     fun observeOpenMitCount(): Flow<Int>
 
     /**
-     * Drags every overdue task onto [today]. They are already late; letting them accumulate as a
-     * red backlog is how the list turns into noise the user stops reading.
-     *
-     * @return how many were moved.
+     * The overdue tasks and the dates they currently carry — read before a bulk reschedule so the
+     * move can be undone. A one-tap action that silently rewrites a dozen due dates needs a way back.
      */
     @Query(
         """
-        UPDATE tasks SET dueDate = :today, updatedAt = :now
+        SELECT id, dueDate FROM tasks
         WHERE done = 0 AND dueDate IS NOT NULL AND dueDate < :today
         """
     )
-    suspend fun rescheduleOverdueTo(today: Int, now: Long): Int
+    suspend fun findOverdue(today: Int): List<TaskDueDate>
+
+    /** Moves exactly [ids] — the same rows that were just read, so the undo set can't drift. */
+    @Query("UPDATE tasks SET dueDate = :today, updatedAt = :now WHERE id IN (:ids)")
+    suspend fun setDueDateFor(ids: List<Long>, today: Int, now: Long)
+
+    @Query("UPDATE tasks SET dueDate = :dueDate, updatedAt = :now WHERE id = :id")
+    suspend fun setDueDate(id: Long, dueDate: Int?, now: Long)
 
     @Insert
     suspend fun insert(task: TaskEntity): Long

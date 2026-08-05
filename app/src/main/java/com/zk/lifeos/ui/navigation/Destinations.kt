@@ -71,4 +71,8 @@ object Routes {
 
     /** Every open task, flat — for「我现在能做什么」without walking each project. */
     const val ALL_TASKS = "tasks/all"
+
+    /** The way back from archiving. Without these, archive is indistinguishable from delete. */
+    const val ARCHIVED_PROJECTS = "projects/archived"
+    const val ARCHIVED_HABITS = "habits/archived"
 }

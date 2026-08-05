@@ -1,8 +1,10 @@
 package com.zk.lifeos.data.repository
 
+import com.zk.lifeos.data.db.dao.HabitWithCheckCount
 import com.zk.lifeos.data.db.dao.ProjectWithCounts
 import com.zk.lifeos.data.db.dao.TaskWithProject
 import com.zk.lifeos.data.db.entity.CaptureEntity
+import com.zk.lifeos.model.ArchivedHabit
 import com.zk.lifeos.data.db.entity.JournalEntryEntity
 import com.zk.lifeos.data.db.entity.TaskEntity
 import com.zk.lifeos.model.CaptureItem
@@ -45,6 +47,13 @@ internal fun TaskWithProject.toModel(): TaskListItem = TaskListItem(
     task = task.toModel(),
     projectName = projectName,
     projectEmoji = projectEmoji,
+)
+
+internal fun HabitWithCheckCount.toModel(): ArchivedHabit = ArchivedHabit(
+    id = habit.id,
+    name = habit.name,
+    emoji = habit.emoji,
+    checkCount = checkCount,
 )
 
 internal fun ProjectWithCounts.toModel(): ProjectSummary = ProjectSummary(

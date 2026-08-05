@@ -11,8 +11,10 @@ import com.zk.lifeos.AppContainer
 import com.zk.lifeos.LifeOsApplication
 import com.zk.lifeos.ui.screen.capture.CaptureViewModel
 import com.zk.lifeos.ui.screen.dashboard.DashboardViewModel
+import com.zk.lifeos.ui.screen.habits.ArchivedHabitsViewModel
 import com.zk.lifeos.ui.screen.habits.HabitsViewModel
 import com.zk.lifeos.ui.screen.journal.JournalViewModel
+import com.zk.lifeos.ui.screen.projects.ArchivedProjectsViewModel
 import com.zk.lifeos.ui.screen.projects.ProjectsViewModel
 import com.zk.lifeos.ui.screen.settings.SettingsViewModel
 import com.zk.lifeos.ui.screen.tasks.AllTasksViewModel
@@ -38,6 +40,8 @@ object LifeOsViewModelFactory {
         initializer { ProjectsViewModel(container.projectService, container.taskService) }
         initializer { AllTasksViewModel(container.taskService, container.projectService) }
         initializer { HabitsViewModel(container.habitService) }
+        initializer { ArchivedProjectsViewModel(container.projectService) }
+        initializer { ArchivedHabitsViewModel(container.habitService) }
         initializer { JournalViewModel(container.journalService) }
         initializer { CaptureViewModel(container.captureService) }
         initializer { SettingsViewModel(container.settingsService, container.backupService) }

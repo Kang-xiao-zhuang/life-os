@@ -29,6 +29,10 @@ class ProjectsViewModel(
         .map { it.size }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
+    /** Drives the 「已归档」 entry; hidden while nothing has been archived. */
+    val archivedCount: StateFlow<Int> = projectService.observeArchivedCount()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     fun createProject(name: String, emoji: String) =
         viewModelScope.launch { projectService.create(name, emoji) }
 

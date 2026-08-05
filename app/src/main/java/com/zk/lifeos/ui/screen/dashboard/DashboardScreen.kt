@@ -7,18 +7,24 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zk.lifeos.model.DashboardSnapshot
+import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.EmptyHint
@@ -58,9 +64,23 @@ fun DashboardScreen(
     val mitCount by viewModel.mitCount.collectAsStateWithLifecycle()
     var editor by remember { mutableStateOf<Editor>(Editor.None) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val offerUndo: (List<RescheduledTask>) -> Unit = { moved ->
+        scope.launch {
+            val result = snackbarHostState.showSnackbar(
+                message = "已把 ${moved.size} 项挪到今天",
+                actionLabel = "撤销",
+                duration = SnackbarDuration.Long,
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.undoReschedule(moved)
+        }
+    }
+
     LifeOsScreen(
         title = "LifeOS",
         modifier = modifier,
+        snackbarHostState = snackbarHostState,
         actions = {
             // Settings deliberately lives here rather than in the bottom bar.
             IconButton(onClick = onOpenSettings) {
@@ -80,7 +100,7 @@ fun DashboardScreen(
             state = state,
             onToggle = viewModel::toggleTask,
             onEdit = { editor = Editor.Edit(it) },
-            onRescheduleOverdue = viewModel::rescheduleOverdue,
+            onRescheduleOverdue = { viewModel.rescheduleOverdue(offerUndo) },
         )
         HabitsCard(
             state = state,

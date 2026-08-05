@@ -3,10 +3,12 @@ package com.zk.lifeos.data.repository
 import com.zk.lifeos.data.db.dao.HabitDao
 import com.zk.lifeos.data.db.entity.HabitCheckEntity
 import com.zk.lifeos.data.db.entity.HabitEntity
+import com.zk.lifeos.model.ArchivedHabit
 import com.zk.lifeos.model.HabitMonth
 import com.zk.lifeos.model.HabitToday
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -82,6 +84,14 @@ class HabitRepository(private val habitDao: HabitDao) {
         )
 
     suspend fun rename(id: Long, name: String, emoji: String) = habitDao.rename(id, name, emoji)
+
+    /** Retire / bring back a habit. Its check-ins are untouched either way. */
+    suspend fun setArchived(id: Long, archived: Boolean) = habitDao.setArchived(id, archived)
+
+    fun observeArchived(): Flow<List<ArchivedHabit>> =
+        habitDao.observeArchivedWithCounts().map { rows -> rows.map { it.toModel() } }
+
+    fun observeArchivedCount(): Flow<Int> = habitDao.observeArchivedCount()
 
     /** Deleting a habit also removes its check-ins (foreign key cascade). */
     suspend fun delete(id: Long) = habitDao.delete(id)

@@ -34,15 +34,19 @@ private val weekdayLabels = listOf("一", "二", "三", "四", "五", "六", "�
  * 习惯 — tap a row to check today off (tap again to undo), long-press to edit or delete.
  */
 @Composable
-fun HabitsScreen(modifier: Modifier = Modifier) {
+fun HabitsScreen(
+    onOpenArchived: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val viewModel: HabitsViewModel = viewModel(factory = LifeOsViewModelFactory.Factory)
     val habits by viewModel.habits.collectAsStateWithLifecycle()
     val month by viewModel.month.collectAsStateWithLifecycle()
+    val archivedCount by viewModel.archivedCount.collectAsStateWithLifecycle()
     val checkedToday = habits.count { it.checkedToday }
 
     var creating by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<HabitToday?>(null) }
-    var deleting by remember { mutableStateOf<HabitToday?>(null) }
+    var archiving by remember { mutableStateOf<HabitToday?>(null) }
 
     LifeOsScreen(
         title = "习惯",
@@ -77,6 +81,12 @@ fun HabitsScreen(modifier: Modifier = Modifier) {
                 )
             }
         }
+
+        if (archivedCount > 0) {
+            SectionCard(title = "已归档", trailing = "$archivedCount 个", onClick = onOpenArchived) {
+                EmptyHint("停下来的习惯在这里,打卡记录都留着,想继续随时恢复。")
+            }
+        }
     }
 
     if (creating) {
@@ -100,10 +110,12 @@ fun HabitsScreen(modifier: Modifier = Modifier) {
             emojiOptions = habitEmojis,
             initialName = habit.name,
             initialEmoji = habit.emoji,
-            destructiveText = "删除",
+            // 归档, not 删除: stopping a habit shouldn't cost you its history. Permanent deletion
+            // is only reachable from the archive screen.
+            destructiveText = "归档",
             onDestructive = {
                 editing = null
-                deleting = habit
+                archiving = habit
             },
             onDismiss = { editing = null },
             onConfirm = { name, emoji ->
@@ -113,14 +125,15 @@ fun HabitsScreen(modifier: Modifier = Modifier) {
         )
     }
 
-    deleting?.let { habit ->
+    archiving?.let { habit ->
         ConfirmDialog(
-            title = "删除「${habit.name}」?",
-            message = "它的打卡记录会一起删掉,这个动作没法撤销。",
-            onDismiss = { deleting = null },
+            title = "归档「${habit.name}」?",
+            message = "它会从今天的清单里移走,但打卡记录都留着 —— 以后想继续,在「已归档」里恢复就行。",
+            confirmText = "归档",
+            onDismiss = { archiving = null },
             onConfirm = {
-                viewModel.delete(habit.id)
-                deleting = null
+                viewModel.archive(habit.id)
+                archiving = null
             },
         )
     }

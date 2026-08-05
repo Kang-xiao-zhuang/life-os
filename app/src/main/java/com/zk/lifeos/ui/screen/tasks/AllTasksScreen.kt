@@ -6,17 +6,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.model.TaskListItem
 import com.zk.lifeos.ui.LifeOsViewModelFactory
@@ -48,6 +54,19 @@ fun AllTasksScreen(
     val today = remember { LocalDate.now() }
     var editing by remember { mutableStateOf<Task?>(null) }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val offerUndo: (List<RescheduledTask>) -> Unit = { moved ->
+        scope.launch {
+            val result = snackbarHostState.showSnackbar(
+                message = "已把 ${moved.size} 项挪到今天",
+                actionLabel = "撤销",
+                duration = SnackbarDuration.Long,
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.undoReschedule(moved)
+        }
+    }
+
     val overdue = tasks.filter { it.task.isOverdue(today) }
     val dueToday = tasks.filter { it.task.isDueToday(today) }
     val later = tasks.filter { it.task.dueDate != null && it.task.dueDate.isAfter(today) }
@@ -56,6 +75,7 @@ fun AllTasksScreen(
     LifeOsScreen(
         title = "所有待办",
         modifier = modifier,
+        snackbarHostState = snackbarHostState,
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -74,7 +94,7 @@ fun AllTasksScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     overdue.forEach { Row(it, today, viewModel) { editing = it.task } }
                     // Bulk escape hatch: a red backlog that only grows is a list you stop reading.
-                    TextButton(onClick = viewModel::rescheduleOverdue) {
+                    TextButton(onClick = { viewModel.rescheduleOverdue(offerUndo) }) {
                         Text("把这 ${overdue.size} 项挪到今天")
                     }
                 }

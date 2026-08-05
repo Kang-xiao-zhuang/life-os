@@ -46,8 +46,15 @@ class HabitsViewModel(private val habitService: HabitService) : ViewModel() {
     fun rename(id: Long, name: String, emoji: String) =
         viewModelScope.launch { habitService.rename(id, name, emoji) }
 
-    /** Also removes the habit's check-in history — the UI confirms before calling this. */
-    fun delete(id: Long) = viewModelScope.launch { habitService.delete(id) }
+    /**
+     * The normal way to stop tracking something: history stays, and it can come back.
+     * Permanent deletion lives in the archive screen, two steps away.
+     */
+    fun archive(id: Long) = viewModelScope.launch { habitService.archive(id) }
+
+    /** Drives the 「已归档」 entry; hidden while nothing has been archived. */
+    val archivedCount: StateFlow<Int> = habitService.observeArchivedCount()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     fun toggleToday(habitId: Long) = viewModelScope.launch { habitService.toggleToday(habitId) }
 }

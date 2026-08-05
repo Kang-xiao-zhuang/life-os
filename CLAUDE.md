@@ -166,9 +166,36 @@ reachable, so this stays possible if the trade is ever worth making.)
 - **逾期批量处理** — 「把 N 项逾期挪到今天」on Dashboard and in 所有待办. Overdue items otherwise
   accumulate as red text until the card becomes noise the user stops reading.
 
+**Third round — closing dead ends (2026-08-05)**
+
+All three were closer to defects than to missing features; they share one rule: **an action the
+user takes must not become unrecoverable.**
+
+- **归档不再是黑洞** — every list filters `archived = 0`, so an archived project simply stopped
+  existing: 「归档而不是删除」meant nothing. There are now `projects/archived` and `habits/archived`
+  screens (entries appear on the respective tab only when something is archived) with 恢复 and,
+  only there, 彻底删除.
+- **习惯可以归档了** — `HabitEntity.archived` had existed since day one with **nothing ever writing
+  to it**; the only way to stop tracking something was delete, which cascaded away every check-in.
+  Archiving is now the normal action (the edit dialog's destructive button is 归档, not 删除), and
+  permanent deletion lives in the archive screen, stating the check-in count it will destroy.
+- **逾期批量挪期可撤销** — it silently rewrote a dozen due dates. The repository now reads the rows
+  first and updates exactly those ids, returns `List<RescheduledTask>` with each previous date, and
+  the screen offers 撤销 in a snackbar. `LifeOsScreen` grew an optional `snackbarHostState` for this.
+- Snackbars are restyled: Material's default uses the **inverse** surface, which in this palette is
+  a white slab with a purple action (the inverse roles were never defined, so M3 defaults leaked
+  through). They now use `surfaceContainerHigh` + the app's own accent.
+
+Two-step rule worth keeping: **nothing in the app deletes user history in one step.** Projects and
+habits must be archived first; only the archive screen can destroy them.
+
+Also confirmed this round: **`assembleRelease` works** — R8 minify + `shrinkResources` pass, so a
+signed build is possible whenever it's wanted.
+
 Still open, only if it earns its place: Markdown *rendering* for journal entries (text is already
-stored verbatim), an attachments feature (the backup format already carries them), and reminders
-(would need `POST_NOTIFICATIONS`, same zero-permission trade-off as weather).
+stored verbatim), an attachments feature (the backup format already carries them), reminders
+(would need `POST_NOTIFICATIONS`, same zero-permission trade-off as weather), a backup-freshness
+line in Settings, task notes shown in lists, and editing a past journal entry.
 
 ### Verifying on the emulator
 

@@ -55,6 +55,28 @@ interface HabitDao {
     @Query("UPDATE habits SET name = :name, emoji = :emoji WHERE id = :id")
     suspend fun rename(id: Long, name: String, emoji: String)
 
+    /**
+     * Retire a habit without destroying it. The `archived` column existed from the start but
+     * nothing ever wrote to it, so the only way to stop tracking something was to delete it —
+     * taking every check-in with it. A season of 阅读 is worth more than the row it lives in.
+     */
+    @Query("UPDATE habits SET archived = :archived WHERE id = :id")
+    suspend fun setArchived(id: Long, archived: Boolean)
+
+    /** Archived habits plus how much history each is holding, so 彻底删除 can say what it costs. */
+    @Query(
+        """
+        SELECT h.*, (SELECT COUNT(*) FROM habit_checks c WHERE c.habitId = h.id) AS checkCount
+        FROM habits h
+        WHERE h.archived = 1
+        ORDER BY h.sortOrder ASC, h.id ASC
+        """
+    )
+    fun observeArchivedWithCounts(): Flow<List<HabitWithCheckCount>>
+
+    @Query("SELECT COUNT(*) FROM habits WHERE archived = 1")
+    fun observeArchivedCount(): Flow<Int>
+
     /** Deleting a habit cascades its check-ins (declared on [HabitCheckEntity]). */
     @Query("DELETE FROM habits WHERE id = :id")
     suspend fun delete(id: Long)

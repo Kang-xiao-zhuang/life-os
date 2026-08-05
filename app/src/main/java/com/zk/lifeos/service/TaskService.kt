@@ -1,6 +1,7 @@
 package com.zk.lifeos.service
 
 import com.zk.lifeos.data.repository.TaskRepository
+import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.model.TaskListItem
 import kotlinx.coroutines.flow.Flow
@@ -20,10 +21,16 @@ class TaskService(private val taskRepository: TaskRepository) {
 
     /**
      * 「把逾期的挪到今天」. They are already late, and a growing red backlog is how the list stops
-     * being read at all. Reversible by editing any individual task.
+     * being read at all.
+     *
+     * Returns what it moved so the caller can offer an undo — one tap must not silently rewrite a
+     * dozen due dates with no way back.
      */
-    suspend fun rescheduleOverdueToToday(): Int =
+    suspend fun rescheduleOverdueToToday(): List<RescheduledTask> =
         taskRepository.rescheduleOverdueTo(LocalDate.now())
+
+    suspend fun undoReschedule(moved: List<RescheduledTask>) =
+        taskRepository.restoreDueDates(moved)
 
     companion object {
         /** 一天挑一到两件就够 — beyond this the flag stops meaning anything. Advisory, not enforced. */

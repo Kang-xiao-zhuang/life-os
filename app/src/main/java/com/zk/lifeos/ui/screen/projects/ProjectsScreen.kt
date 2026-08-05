@@ -51,12 +51,14 @@ import java.time.LocalDate
 fun ProjectsScreen(
     onOpenProject: (Long) -> Unit,
     onOpenAllTasks: () -> Unit,
+    onOpenArchived: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val viewModel: ProjectsViewModel = viewModel(factory = LifeOsViewModelFactory.Factory)
     val projects by viewModel.projects.collectAsStateWithLifecycle()
     val unassigned by viewModel.unassigned.collectAsStateWithLifecycle()
     val openTaskCount by viewModel.openTaskCount.collectAsStateWithLifecycle()
+    val archivedCount by viewModel.archivedCount.collectAsStateWithLifecycle()
     val today = LocalDate.now()
 
     var creating by remember { mutableStateOf(false) }
@@ -91,6 +93,17 @@ fun ProjectsScreen(
                     onClick = { onOpenProject(project.id) },
                     onLongClick = { editing = project },
                 )
+            }
+        }
+
+        // Last, because it's a rare visit — but present, so archiving isn't a dead end.
+        if (archivedCount > 0) {
+            SectionCard(
+                title = "已归档",
+                trailing = "$archivedCount 个",
+                onClick = onOpenArchived,
+            ) {
+                EmptyHint("归档的项目在这里,可以恢复。")
             }
         }
 

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zk.lifeos.model.DashboardSnapshot
 import com.zk.lifeos.model.ProjectSummary
+import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.service.DashboardService
 import com.zk.lifeos.service.HabitService
@@ -70,6 +71,18 @@ class DashboardViewModel(
 
     fun toggleHabit(habitId: Long) = viewModelScope.launch { habitService.toggleToday(habitId) }
 
-    /** 把逾期的挪到今天 — clears the red backlog in one tap instead of task by task. */
-    fun rescheduleOverdue() = viewModelScope.launch { taskService.rescheduleOverdueToToday() }
+    /**
+     * 把逾期的挪到今天 — clears the red backlog in one tap instead of task by task.
+     *
+     * Reports back how many moved so the screen can offer an undo: one tap rewriting a dozen due
+     * dates with no way back is not an improvement.
+     */
+    fun rescheduleOverdue(onMoved: (List<RescheduledTask>) -> Unit) = viewModelScope.launch {
+        val moved = taskService.rescheduleOverdueToToday()
+        if (moved.isNotEmpty()) onMoved(moved)
+    }
+
+    fun undoReschedule(moved: List<RescheduledTask>) = viewModelScope.launch {
+        taskService.undoReschedule(moved)
+    }
 }

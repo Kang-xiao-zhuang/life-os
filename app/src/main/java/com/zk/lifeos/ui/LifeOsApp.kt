@@ -28,8 +28,10 @@ import com.zk.lifeos.ui.navigation.Routes
 import com.zk.lifeos.ui.navigation.TopLevelDestination
 import com.zk.lifeos.ui.screen.capture.CaptureScreen
 import com.zk.lifeos.ui.screen.dashboard.DashboardScreen
+import com.zk.lifeos.ui.screen.habits.ArchivedHabitsScreen
 import com.zk.lifeos.ui.screen.habits.HabitsScreen
 import com.zk.lifeos.ui.screen.journal.JournalScreen
+import com.zk.lifeos.ui.screen.projects.ArchivedProjectsScreen
 import com.zk.lifeos.ui.screen.projects.ProjectDetailScreen
 import com.zk.lifeos.ui.screen.projects.ProjectsScreen
 import com.zk.lifeos.ui.screen.settings.SettingsScreen
@@ -50,8 +52,13 @@ fun LifeOsApp(captureRequest: Int = 0) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val currentDestination = backStackEntry?.destination
-    val showBottomBar =
-        currentRoute !in setOf(Routes.SETTINGS, Routes.PROJECT_DETAIL, Routes.ALL_TASKS)
+    val showBottomBar = currentRoute !in setOf(
+        Routes.SETTINGS,
+        Routes.PROJECT_DETAIL,
+        Routes.ALL_TASKS,
+        Routes.ARCHIVED_PROJECTS,
+        Routes.ARCHIVED_HABITS,
+    )
 
     // Jump straight to the capture field when opened from the home screen. Keyed on the counter,
     // so tapping the widget again re-triggers it.
@@ -103,10 +110,17 @@ fun LifeOsApp(captureRequest: Int = 0) {
                 ProjectsScreen(
                     onOpenProject = { id -> navController.navigate(Routes.projectDetail(id)) },
                     onOpenAllTasks = { navController.navigate(Routes.ALL_TASKS) },
+                    onOpenArchived = { navController.navigate(Routes.ARCHIVED_PROJECTS) },
                 )
             }
             composable(Routes.ALL_TASKS) {
                 AllTasksScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.ARCHIVED_PROJECTS) {
+                ArchivedProjectsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.ARCHIVED_HABITS) {
+                ArchivedHabitsScreen(onBack = { navController.popBackStack() })
             }
             composable(TopLevelDestination.CAPTURE.route) {
                 CaptureScreen(
@@ -114,7 +128,9 @@ fun LifeOsApp(captureRequest: Int = 0) {
                     onAutoFocusConsumed = { autoFocusCapture = false },
                 )
             }
-            composable(TopLevelDestination.HABITS.route) { HabitsScreen() }
+            composable(TopLevelDestination.HABITS.route) {
+                HabitsScreen(onOpenArchived = { navController.navigate(Routes.ARCHIVED_HABITS) })
+            }
             composable(TopLevelDestination.JOURNAL.route) { JournalScreen() }
 
             composable(

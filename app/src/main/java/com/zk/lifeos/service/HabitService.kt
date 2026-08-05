@@ -1,6 +1,7 @@
 package com.zk.lifeos.service
 
 import com.zk.lifeos.data.repository.HabitRepository
+import com.zk.lifeos.model.ArchivedHabit
 import com.zk.lifeos.model.HabitMonth
 import com.zk.lifeos.model.HabitToday
 import kotlinx.coroutines.flow.Flow
@@ -32,8 +33,20 @@ class HabitService(private val habitRepository: HabitRepository) {
     }
 
     /**
-     * Deleting a habit removes its whole check-in history — that is why the UI confirms first.
-     * There is no archive for habits: an abandoned habit is noise, unlike a project.
+     * Retire a habit. This is the normal way to stop tracking something: the streak history stays,
+     * and it can come back later. Deleting is reserved for the archive.
+     */
+    suspend fun archive(id: Long) = habitRepository.setArchived(id, archived = true)
+
+    fun observeArchived(): Flow<List<ArchivedHabit>> = habitRepository.observeArchived()
+
+    fun observeArchivedCount(): Flow<Int> = habitRepository.observeArchivedCount()
+
+    suspend fun restore(id: Long) = habitRepository.setArchived(id, archived = false)
+
+    /**
+     * Permanent, and only reachable from the archive: this destroys every check-in the habit ever
+     * recorded, so it takes two deliberate steps to get here.
      */
     suspend fun delete(id: Long) = habitRepository.delete(id)
 

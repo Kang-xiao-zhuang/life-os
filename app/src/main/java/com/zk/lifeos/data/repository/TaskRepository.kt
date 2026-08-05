@@ -2,6 +2,7 @@ package com.zk.lifeos.data.repository
 
 import com.zk.lifeos.data.db.dao.TaskDao
 import com.zk.lifeos.data.db.entity.TaskEntity
+import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.model.TaskListItem
 import kotlinx.coroutines.flow.Flow
@@ -31,9 +32,29 @@ class TaskRepository(private val taskDao: TaskDao) {
 
     fun observeOpenMitCount(): Flow<Int> = taskDao.observeOpenMitCount()
 
-    /** Moves every overdue task to [today]. Returns how many moved. */
-    suspend fun rescheduleOverdueTo(today: LocalDate): Int =
-        taskDao.rescheduleOverdueTo(today.toEpochDayInt(), System.currentTimeMillis())
+    /**
+     * Moves every overdue task to [today] and returns what it moved, so the caller can offer an
+     * undo. Reads the rows first and then updates exactly those ids — the undo set can't drift
+     * away from what actually changed.
+     */
+    suspend fun rescheduleOverdueTo(today: LocalDate): List<RescheduledTask> {
+        val overdue = taskDao.findOverdue(today.toEpochDayInt())
+        if (overdue.isEmpty()) return emptyList()
+        taskDao.setDueDateFor(
+            ids = overdue.map { it.id },
+            today = today.toEpochDayInt(),
+            now = System.currentTimeMillis(),
+        )
+        return overdue.map { RescheduledTask(it.id, it.dueDate?.toLocalDate()) }
+    }
+
+    /** Puts the dates back, one by one — the batch is small and each row had its own date. */
+    suspend fun restoreDueDates(items: List<RescheduledTask>) {
+        val now = System.currentTimeMillis()
+        items.forEach { item ->
+            taskDao.setDueDate(item.id, item.previousDueDate?.toEpochDayInt(), now)
+        }
+    }
 
     suspend fun create(
         title: String,

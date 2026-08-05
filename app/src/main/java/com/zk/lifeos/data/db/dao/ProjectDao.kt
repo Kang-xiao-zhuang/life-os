@@ -31,6 +31,33 @@ interface ProjectDao {
     )
     fun observeActiveWithCounts(): Flow<List<ProjectWithCounts>>
 
+    /**
+     * Archived projects, newest first. Without this, archiving was a one-way trip: every other
+     * query filters `archived = 0`, so an archived project became unreachable — the opposite of
+     * what "archive, don't delete" is supposed to mean.
+     */
+    @Query(
+        """
+        SELECT p.*,
+          (SELECT COUNT(*) FROM tasks t WHERE t.projectId = p.id AND t.done = 0) AS openTasks,
+          (SELECT COUNT(*) FROM tasks t WHERE t.projectId = p.id AND t.done = 1) AS doneTasks
+        FROM projects p
+        WHERE p.archived = 1
+        ORDER BY p.updatedAt DESC
+        """
+    )
+    fun observeArchivedWithCounts(): Flow<List<ProjectWithCounts>>
+
+    @Query("SELECT COUNT(*) FROM projects WHERE archived = 1")
+    fun observeArchivedCount(): Flow<Int>
+
+    /**
+     * Permanent delete, only offered for projects that are already archived. Its tasks survive:
+     * the foreign key is `SET NULL`, so they fall back to 未归类 rather than disappearing.
+     */
+    @Query("DELETE FROM projects WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     @Insert
     suspend fun insert(project: ProjectEntity): Long
 

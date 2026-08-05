@@ -33,4 +33,12 @@ class ProjectRepository(private val projectDao: ProjectDao) {
 
     suspend fun setArchived(id: Long, archived: Boolean) =
         projectDao.setArchived(id, archived, System.currentTimeMillis())
+
+    fun observeArchived(): Flow<List<ProjectSummary>> =
+        projectDao.observeArchivedWithCounts().map { rows -> rows.map { it.toModel() } }
+
+    fun observeArchivedCount(): Flow<Int> = projectDao.observeArchivedCount()
+
+    /** Permanent. The project's tasks fall back to 未归类 rather than being deleted with it. */
+    suspend fun deletePermanently(id: Long) = projectDao.deleteById(id)
 }
