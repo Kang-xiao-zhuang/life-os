@@ -106,6 +106,14 @@ instrumented tests.
   today (measured from yesterday) because the day isn't over.
 - `JournalViewModel` owns the edit draft. A `remember`-ed local copy would be seeded from the
   empty placeholder before the DB emits and then never refresh — blank fields over saved text.
+- The journal editor is pointed at `selectedDate`, **not** hard-wired to today: any past day can be
+  written or corrected. Two guards in the collector are load-bearing — never overwrite what the
+  user is typing (`dirty`), and never accept a late emission for the day just navigated away from
+  (`stored.date == selectedDate`). Switching days **saves** unsaved text first; no navigation in
+  this app destroys something the user typed. Future dates are refused.
+- A task's 备注 shows as one ellipsized line on its row, but only while the task is open — on a
+  finished task it is no longer a reminder, just noise. `TaskRow` aligns to `Alignment.Top` because
+  a row can now be three lines tall and a centred tick reads as belonging to the second line.
 
 - Phase 4 added 导出 / 导入 (`LifeOS_Backup.zip`), finished the settings page, and **closed the
   destructive-migration risk** (see Database above — there is no `fallbackToDestructiveMigration`
@@ -268,6 +276,38 @@ release build can coexist on one device.
 - The `-Xannotation-default-target=param-property` compiler arg in `app/build.gradle.kts` silences
   the Kotlin warning about annotations on constructor `val`s; keep it rather than annotating
   every site.
+
+### Localisation (read this before touching any UI text)
+
+Two locales: `values/` is **English** (the default, so an unmatched system language still gets a
+readable app) and `values-zh/` is Chinese. Settings → 语言 pins either one regardless of the phone.
+
+`ui/LifeOsLocalization.kt` applies it by overriding `LocalConfiguration` + `LocalContext`. No
+appcompat, no API-33 branch, no activity recreation. Three traps came out of building it, all of
+which cost a debugging round:
+
+- **`Locale.getDefault()` is the *system* language** and ignores the in-app switch. Use
+  `currentLocale()` for month/weekday names, and `LocalContext.current.getString(...)` for text
+  built outside composition (snackbars).
+- **A `Dialog` / `ModalBottomSheet` is its own subcomposition** and Compose refills its
+  `LocalContext` from the overlay's window — so overlays revert to the *phone's* language. Wrap
+  every overlay slot in `LifeOsOverlayLocalization { }`. This is not theoretical: the entire task
+  sheet, and Material's own date-picker strings, came up in English inside a Chinese app.
+- **Anything resolved through `LocalContext` breaks under the override.**
+  `LocalActivityResultRegistryOwner` and `LocalOnBackPressedDispatcherOwner` find the Activity by
+  walking up from it; `LifeOsLocalization` re-provides both. Without that, the export file picker
+  crashes outright and system back stops travelling through the nav graph.
+- `LifeOsLocalization` must always make **one** `CompositionLocalProvider` call — an early
+  `content()` return for `SYSTEM` changes the composition's structure and discards everything
+  remembered below it, including the nav back stack.
+
+Service and data layers must never build user-facing text: they have no resources. Return a type
+(see `BackupFailure`) or null (see `TaskListItem.projectLabel`) and let the UI find the words.
+
+The launcher shortcut and home-screen widget are rendered by the *launcher*, in the system
+language. `LifeOsApplication` collects the language flow and re-publishes both on every change;
+`CaptureWidgetProvider.onUpdate` reads `LifeOsApplication.currentLanguage` (a plain `@Volatile`
+field, because a provider cannot suspend to await DataStore).
 
 ---
 

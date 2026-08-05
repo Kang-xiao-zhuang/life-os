@@ -33,6 +33,8 @@
     <string name="label_unassigned">未归类</string>
     <string name="label_icon_optional">图标(可选)</string>
     <string name="date_short">%1$d/%2$d</string>
+    <!-- 1 = 月, 2 = 日, 3 = 星期 -->
+    <string name="date_month_day_weekday">%1$d 月 %2$d 日 · %3$s</string>
 
     <!-- ===== 计数 ===== -->
     <plurals name="count_items">
@@ -69,8 +71,6 @@
 
     <!-- ===== 首页 ===== -->
     <string name="dash_today">今天</string>
-    <!-- 1 = 月, 2 = 日, 3 = 星期 -->
-    <string name="dash_date_line">%1$d 月 %2$d 日 · %3$s</string>
     <string name="dash_new_task">新任务</string>
     <string name="dash_mit_title">今日最重要</string>
     <string name="dash_all_done">都做完了</string>
@@ -185,7 +185,12 @@
     <string name="journal_q_tomorrow">明天最重要的一件事</string>
     <string name="journal_unsaved_hint">改动还没保存。</string>
     <string name="journal_history">以前</string>
-    <string name="journal_history_hint">点一条可以看当天写的全部内容。</string>
+    <string name="journal_history_hint">点一条就能打开那天,接着改。</string>
+    <string name="journal_choose_day">换一天</string>
+    <string name="journal_prev_day">前一天</string>
+    <string name="journal_next_day">后一天</string>
+    <string name="journal_back_to_today">回到今天</string>
+    <string name="journal_editing_past">正在写这一天的复盘,不是今天。</string>
     <!-- 1 = 月份名(中文不用), 2 = 日, 3 = 年, 4 = 月 -->
     <string name="journal_date_full">%3$d 年 %4$d 月 %2$d 日</string>
 

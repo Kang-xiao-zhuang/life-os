@@ -39,6 +39,8 @@
     <string name="label_unassigned">No project</string>
     <string name="label_icon_optional">Icon (optional)</string>
     <string name="date_short">%1$d/%2$d</string>
+    <!-- 1 = month number, 2 = day, 3 = weekday name -->
+    <string name="date_month_day_weekday">%1$d/%2$d · %3$s</string>
 
     <!-- ===== counters ===== -->
     <plurals name="count_items">
@@ -86,8 +88,6 @@
 
     <!-- ===== dashboard ===== -->
     <string name="dash_today">Today</string>
-    <!-- 1 = month number, 2 = day, 3 = weekday name -->
-    <string name="dash_date_line">%1$d/%2$d · %3$s</string>
     <string name="dash_new_task">New task</string>
     <string name="dash_mit_title">Most important today</string>
     <string name="dash_all_done">All done</string>
@@ -202,7 +202,12 @@
     <string name="journal_q_tomorrow">The one thing that matters tomorrow</string>
     <string name="journal_unsaved_hint">Changes aren\'t saved yet.</string>
     <string name="journal_history">Earlier</string>
-    <string name="journal_history_hint">Tap an entry to read the whole day.</string>
+    <string name="journal_history_hint">Tap an entry to open that day and edit it.</string>
+    <string name="journal_choose_day">Another day</string>
+    <string name="journal_prev_day">Previous day</string>
+    <string name="journal_next_day">Next day</string>
+    <string name="journal_back_to_today">Back to today</string>
+    <string name="journal_editing_past">You\'re editing this day, not today.</string>
     <!-- 1 = month name, 2 = day, 3 = year, 4 = month number -->
     <string name="journal_date_full">%1$s %2$d, %3$d</string>
 

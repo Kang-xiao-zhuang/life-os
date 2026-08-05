@@ -48,7 +48,10 @@ fun TaskRow(
 
     Row(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        // Top, not centre: a row can now be three lines tall (title + 备注 + project), and a tick
+        // floating beside the second line reads as belonging to it rather than to the task.
+        // Identical to centring for the common single-line row.
+        verticalAlignment = Alignment.Top,
     ) {
         Icon(
             imageVector = if (task.done) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
@@ -77,6 +80,20 @@ fun TaskRow(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+            // 备注 was write-only: you could add it in the sheet and then never see it again without
+            // reopening the task. One ellipsized line is enough for「记得带充电器」to do its job,
+            // and it stays out of the way on finished tasks, where it is no longer a reminder.
+            if (task.notes.isNotBlank() && !task.done) {
+                Text(
+                    // Flattened: with maxLines = 1, a note that starts with a blank line would
+                    // otherwise render as an empty row.
+                    text = task.notes.replace('\n', ' ').trim(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             if (projectLabel != null) {
                 Text(
                     text = projectLabel,
@@ -92,7 +109,9 @@ fun TaskRow(
                 text = dueLabel(task.dueDate, today),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (overdue) scheme.error else scheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 8.dp),
+                // Same 6dp the title column carries, so the date sits on the title's line rather
+                // than at the very top of a three-line row.
+                modifier = Modifier.padding(start = 8.dp, top = 6.dp),
             )
         }
     }

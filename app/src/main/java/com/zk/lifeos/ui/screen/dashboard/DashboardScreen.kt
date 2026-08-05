@@ -182,7 +182,12 @@ private fun DateHeader(today: LocalDate) {
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = stringResource(R.string.dash_date_line, today.monthValue, today.dayOfMonth, weekday),
+            text = stringResource(
+                R.string.date_month_day_weekday,
+                today.monthValue,
+                today.dayOfMonth,
+                weekday,
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

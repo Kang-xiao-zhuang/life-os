@@ -7,15 +7,28 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
@@ -25,15 +38,26 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zk.lifeos.R
 import com.zk.lifeos.model.JournalEntry
+import com.zk.lifeos.ui.LifeOsOverlayLocalization
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.components.entryCount
+import com.zk.lifeos.ui.currentLocale
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.TextStyle
 
 /**
  * 每日复盘 — one entry per day, four fixed prompts, saved as written (Markdown is stored
  * verbatim; rendering it is a later polish item, not part of V1).
+ *
+ * Any past day can be opened and edited, not just today. Reviews are written in the evening and
+ * evenings get away from you; a form that only accepts today quietly loses the days you most
+ * wanted to write about. History rows open into this same editor rather than a read-only sheet —
+ * one place to read and change a day, not two.
  */
 @Composable
 fun JournalScreen(modifier: Modifier = Modifier) {
@@ -41,14 +65,17 @@ fun JournalScreen(modifier: Modifier = Modifier) {
     val draft by viewModel.draft.collectAsStateWithLifecycle()
     val dirty by viewModel.dirty.collectAsStateWithLifecycle()
     val recent by viewModel.recent.collectAsStateWithLifecycle()
-    var viewing by remember { mutableStateOf<JournalEntry?>(null) }
+    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
+    var showDatePicker by remember { mutableStateOf(false) }
 
-    // Today's entry is edited above, so it isn't repeated in the history list.
-    val history = recent.filter { it.date != draft.date }
+    val today = LocalDate.now()
+    val isToday = selectedDate == today
+    // The day being edited above isn't repeated in the list below.
+    val history = recent.filter { it.date != selectedDate }
 
     LifeOsScreen(title = stringResource(R.string.journal_title), modifier = modifier) {
         SectionCard(
-            title = stringResource(R.string.label_today),
+            title = if (isToday) stringResource(R.string.label_today) else dateLine(selectedDate),
             trailing = when {
                 dirty -> stringResource(R.string.journal_unsaved)
                 draft.isEmpty -> stringResource(R.string.journal_not_written)
@@ -56,6 +83,18 @@ fun JournalScreen(modifier: Modifier = Modifier) {
             },
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                DayPicker(
+                    isToday = isToday,
+                    onPrevious = viewModel::previousDay,
+                    onNext = viewModel::nextDay,
+                    onToday = viewModel::selectToday,
+                    onPick = { showDatePicker = true },
+                )
+
+                if (!isToday) {
+                    EmptyHint(stringResource(R.string.journal_editing_past))
+                }
+
                 Field(stringResource(R.string.journal_q_done), draft.done, viewModel::setDone)
                 Field(stringResource(R.string.journal_q_win), draft.win, viewModel::setWin)
                 Field(stringResource(R.string.journal_q_problems), draft.problems, viewModel::setProblems)
@@ -80,7 +119,7 @@ fun JournalScreen(modifier: Modifier = Modifier) {
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     history.forEach { entry ->
-                        HistoryRow(entry = entry, onClick = { viewing = entry })
+                        HistoryRow(entry = entry, onClick = { viewModel.selectDate(entry.date) })
                     }
                     EmptyHint(stringResource(R.string.journal_history_hint))
                 }
@@ -88,12 +127,103 @@ fun JournalScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    viewing?.let { entry ->
-        JournalEntrySheet(entry = entry, onDismiss = { viewing = null })
+    if (showDatePicker) {
+        DayPickerDialog(
+            selected = selectedDate,
+            onDismiss = { showDatePicker = false },
+            onPicked = { date ->
+                showDatePicker = false
+                viewModel.selectDate(date)
+            },
+        )
     }
 }
 
-/** One line of history. Tappable — writing a review is only worth it if you can read it back. */
+/**
+ * Arrows for「昨天忘了写」, a chip for anything further back, and a way home.
+ *
+ * 后一天 stops at today because a review of a day that hasn't happened is not a feature.
+ */
+@Composable
+private fun DayPicker(
+    isToday: Boolean,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onToday: () -> Unit,
+    onPick: () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onPrevious) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = stringResource(R.string.journal_prev_day),
+            )
+        }
+        IconButton(onClick = onNext, enabled = !isToday) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(R.string.journal_next_day),
+            )
+        }
+        AssistChip(onClick = onPick, label = { Text(stringResource(R.string.journal_choose_day)) })
+        if (!isToday) {
+            TextButton(onClick = onToday) { Text(stringResource(R.string.journal_back_to_today)) }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DayPickerDialog(
+    selected: LocalDate,
+    onDismiss: () -> Unit,
+    onPicked: (LocalDate) -> Unit,
+) {
+    val todayMillis = remember {
+        LocalDate.now().plusDays(1).atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+    }
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = selected
+            .atStartOfDay(ZoneId.of("UTC"))
+            .toInstant()
+            .toEpochMilli(),
+        // Greying out the future is friendlier than accepting a tap and then ignoring it.
+        selectableDates = remember {
+            object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis < todayMillis
+                override fun isSelectableYear(year: Int) = year <= LocalDate.now().year
+            }
+        },
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            LifeOsOverlayLocalization {
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let { millis ->
+                        // The picker works in UTC; convert on that basis or the date can slip a day.
+                        onPicked(Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate())
+                    } ?: onDismiss()
+                }) { Text(stringResource(R.string.action_ok)) }
+            }
+        },
+        dismissButton = {
+            LifeOsOverlayLocalization {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+            }
+        },
+    ) {
+        // Wrapped so Material's own strings follow the app language, not the phone's.
+        LifeOsOverlayLocalization {
+            DatePicker(state = state)
+        }
+    }
+}
+
+/** One line of history. Tappable — it opens that day in the editor above. */
 @Composable
 private fun HistoryRow(entry: JournalEntry, onClick: () -> Unit) {
     Column(
@@ -118,6 +248,15 @@ private fun HistoryRow(entry: JournalEntry, onClick: () -> Unit) {
         )
     }
 }
+
+/** 「8 月 3 日 · 星期一」— the weekday matters, it's what tells you which day you mean. */
+@Composable
+private fun dateLine(date: LocalDate): String = stringResource(
+    R.string.date_month_day_weekday,
+    date.monthValue,
+    date.dayOfMonth,
+    date.dayOfWeek.getDisplayName(TextStyle.FULL, currentLocale()),
+)
 
 @Composable
 private fun Field(label: String, value: String, onChange: (String) -> Unit) {

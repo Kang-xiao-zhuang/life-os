@@ -33,6 +33,7 @@ import com.zk.lifeos.R
 import com.zk.lifeos.model.ProjectSummary
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.service.TaskService
+import com.zk.lifeos.ui.LifeOsOverlayLocalization
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -52,7 +53,7 @@ data class TaskDraft(
  *
  * [existing] null = creating. [onDelete] is only offered when editing.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskEditSheet(
     existing: Task?,
@@ -75,164 +76,40 @@ fun TaskEditSheet(
     var confirmDelete by remember { mutableStateOf(false) }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text(
-                text = if (existing == null) stringResource(R.string.task_new) else stringResource(R.string.task_edit),
-                style = MaterialTheme.typography.titleMedium,
+        // A sheet is its own subcomposition and otherwise reverts to the phone's language — the
+        // whole sheet came up in English in a Chinese app. See LifeOsOverlayLocalization.
+        LifeOsOverlayLocalization {
+            SheetBody(
+                existing = existing,
+                projects = projects,
+                currentMitCount = currentMitCount,
+                title = title,
+                onTitleChange = { title = it },
+                notes = notes,
+                onNotesChange = { notes = it },
+                projectId = projectId,
+                onProjectChange = { projectId = it },
+                dueDate = dueDate,
+                onDueDateChange = { dueDate = it },
+                onPickDate = { showDatePicker = true },
+                isMit = isMit,
+                onMitToggle = { isMit = !isMit },
+                onSave = { onSave(TaskDraft(title, notes, projectId, dueDate, isMit)) },
+                onDismiss = onDismiss,
+                onRequestDelete = if (onDelete == null) null else ({ confirmDelete = true }),
             )
-
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text(stringResource(R.string.task_title_label)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = { Text(stringResource(R.string.task_notes_label)) },
-                minLines = 2,
-                maxLines = 4,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            // ---- due date ----
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = stringResource(R.string.task_due_date),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AssistChip(
-                        onClick = { showDatePicker = true },
-                        label = {
-                            Text(
-                                dueDate?.let { stringResource(R.string.date_short, it.monthValue, it.dayOfMonth) }
-                                    ?: stringResource(R.string.task_pick_date)
-                            )
-                        },
-                    )
-                    AssistChip(onClick = { dueDate = LocalDate.now() }, label = { Text(stringResource(R.string.label_today)) })
-                    AssistChip(
-                        onClick = { dueDate = LocalDate.now().plusDays(1) },
-                        label = { Text(stringResource(R.string.label_tomorrow)) },
-                    )
-                    if (dueDate != null) {
-                        TextButton(onClick = { dueDate = null }) { Text(stringResource(R.string.action_clear)) }
-                    }
-                }
-            }
-
-            // ---- MIT ----
-            // Advisory, never blocking: it's the user's day. But 「一天挑一到两件就够」 is the whole
-            // point of the flag, and nothing else in the app would ever mention it.
-            val othersFlagged = currentMitCount - if (existing?.isMit == true) 1 else 0
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(
-                    selected = isMit,
-                    onClick = { isMit = !isMit },
-                    label = { Text(stringResource(R.string.task_mit)) },
-                )
-                if (isMit && othersFlagged >= TaskService.MIT_SOFT_LIMIT) {
-                    Text(
-                        text = stringResource(R.string.task_mit_warning, othersFlagged),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            }
-
-            // ---- project ----
-            if (projects.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = stringResource(R.string.task_project),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        FilterChip(
-                            selected = projectId == null,
-                            onClick = { projectId = null },
-                            label = { Text(stringResource(R.string.label_unassigned)) },
-                        )
-                        projects.forEach { project ->
-                            FilterChip(
-                                selected = projectId == project.id,
-                                onClick = { projectId = project.id },
-                                label = {
-                                    Text(
-                                        if (project.emoji.isEmpty()) project.name
-                                        else "${project.emoji} ${project.name}"
-                                    )
-                                },
-                            )
-                        }
-                    }
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Button(
-                    onClick = {
-                        onSave(TaskDraft(title, notes, projectId, dueDate, isMit))
-                    },
-                    enabled = title.isNotBlank(),
-                ) { Text(stringResource(R.string.action_save)) }
-
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-
-                if (onDelete != null) {
-                    TextButton(onClick = { confirmDelete = true }) {
-                        Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            }
         }
     }
 
     if (showDatePicker) {
-        val state = rememberDatePickerState(
-            initialSelectedDateMillis = dueDate
-                ?.atStartOfDay(ZoneId.systemDefault())
-                ?.toInstant()
-                ?.toEpochMilli(),
+        DueDatePicker(
+            initial = dueDate,
+            onDismiss = { showDatePicker = false },
+            onPicked = {
+                dueDate = it
+                showDatePicker = false
+            },
         )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    state.selectedDateMillis?.let { millis ->
-                        // The picker works in UTC; convert on that basis or the date can slip a day.
-                        dueDate = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
-                    }
-                    showDatePicker = false
-                }) { Text(stringResource(R.string.action_ok)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.action_cancel)) }
-            },
-        ) {
-            DatePicker(state = state)
-        }
     }
 
     if (confirmDelete && onDelete != null) {
@@ -245,5 +122,205 @@ fun TaskEditSheet(
                 onDelete()
             },
         )
+    }
+}
+
+/**
+ * The sheet's contents, split out only so the localization wrapper above doesn't cost the whole
+ * body an extra indent level.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SheetBody(
+    existing: Task?,
+    projects: List<ProjectSummary>,
+    currentMitCount: Int,
+    title: String,
+    onTitleChange: (String) -> Unit,
+    notes: String,
+    onNotesChange: (String) -> Unit,
+    projectId: Long?,
+    onProjectChange: (Long?) -> Unit,
+    dueDate: LocalDate?,
+    onDueDateChange: (LocalDate?) -> Unit,
+    onPickDate: () -> Unit,
+    isMit: Boolean,
+    onMitToggle: () -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit,
+    onRequestDelete: (() -> Unit)?,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = if (existing == null) stringResource(R.string.task_new) else stringResource(R.string.task_edit),
+            style = MaterialTheme.typography.titleMedium,
+        )
+
+        OutlinedTextField(
+            value = title,
+            onValueChange = onTitleChange,
+            label = { Text(stringResource(R.string.task_title_label)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        OutlinedTextField(
+            value = notes,
+            onValueChange = onNotesChange,
+            label = { Text(stringResource(R.string.task_notes_label)) },
+            minLines = 2,
+            maxLines = 4,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        // ---- due date ----
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = stringResource(R.string.task_due_date),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AssistChip(
+                    onClick = onPickDate,
+                    label = {
+                        Text(
+                            dueDate?.let { stringResource(R.string.date_short, it.monthValue, it.dayOfMonth) }
+                                ?: stringResource(R.string.task_pick_date)
+                        )
+                    },
+                )
+                AssistChip(
+                    onClick = { onDueDateChange(LocalDate.now()) },
+                    label = { Text(stringResource(R.string.label_today)) },
+                )
+                AssistChip(
+                    onClick = { onDueDateChange(LocalDate.now().plusDays(1)) },
+                    label = { Text(stringResource(R.string.label_tomorrow)) },
+                )
+                if (dueDate != null) {
+                    TextButton(onClick = { onDueDateChange(null) }) {
+                        Text(stringResource(R.string.action_clear))
+                    }
+                }
+            }
+        }
+
+        // ---- MIT ----
+        // Advisory, never blocking: it's the user's day. But 「一天挑一到两件就够」 is the whole
+        // point of the flag, and nothing else in the app would ever mention it.
+        val othersFlagged = currentMitCount - if (existing?.isMit == true) 1 else 0
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            FilterChip(
+                selected = isMit,
+                onClick = onMitToggle,
+                label = { Text(stringResource(R.string.task_mit)) },
+            )
+            if (isMit && othersFlagged >= TaskService.MIT_SOFT_LIMIT) {
+                Text(
+                    text = stringResource(R.string.task_mit_warning, othersFlagged),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+
+        // ---- project ----
+        if (projects.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = stringResource(R.string.task_project),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FilterChip(
+                        selected = projectId == null,
+                        onClick = { onProjectChange(null) },
+                        label = { Text(stringResource(R.string.label_unassigned)) },
+                    )
+                    projects.forEach { project ->
+                        FilterChip(
+                            selected = projectId == project.id,
+                            onClick = { onProjectChange(project.id) },
+                            label = {
+                                Text(
+                                    if (project.emoji.isEmpty()) project.name
+                                    else "${project.emoji} ${project.name}"
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Button(onClick = onSave, enabled = title.isNotBlank()) {
+                Text(stringResource(R.string.action_save))
+            }
+
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+
+            if (onRequestDelete != null) {
+                TextButton(onClick = onRequestDelete) {
+                    Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DueDatePicker(
+    initial: LocalDate?,
+    onDismiss: () -> Unit,
+    onPicked: (LocalDate) -> Unit,
+) {
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = initial
+            ?.atStartOfDay(ZoneId.systemDefault())
+            ?.toInstant()
+            ?.toEpochMilli(),
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            LifeOsOverlayLocalization {
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let { millis ->
+                        // The picker works in UTC; convert on that basis or the date can slip a day.
+                        onPicked(Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate())
+                    } ?: onDismiss()
+                }) { Text(stringResource(R.string.action_ok)) }
+            }
+        },
+        dismissButton = {
+            LifeOsOverlayLocalization {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+            }
+        },
+    ) {
+        // Wrapped so Material's own strings — the picker's title, the month and weekday names —
+        // follow the app language rather than the phone's.
+        LifeOsOverlayLocalization {
+            DatePicker(state = state)
+        }
     }
 }

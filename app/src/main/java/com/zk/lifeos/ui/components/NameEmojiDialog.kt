@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.zk.lifeos.R
+import com.zk.lifeos.ui.LifeOsOverlayLocalization
 
 /** Emoji options offered when creating a project. Picking one is optional. */
 val projectEmojis = listOf("💼", "📚", "🏋", "🎥", "✍", "💰", "🏠", "🎯", "🧑‍💻", "🌱")
@@ -55,34 +56,37 @@ fun NameEmojiDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
+        // Every slot below runs in the dialog's own subcomposition — see LifeOsOverlayLocalization.
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(label) },
-                    singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        imeAction = ImeAction.Done,
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(
-                    text = stringResource(R.string.label_icon_optional),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    emojiOptions.forEach { option ->
-                        FilterChip(
-                            selected = emoji == option,
-                            // Tapping the selected one clears it, so "no icon" stays reachable.
-                            onClick = { emoji = if (emoji == option) "" else option },
-                            label = { Text(option) },
-                        )
+            LifeOsOverlayLocalization {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text(label) },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            imeAction = ImeAction.Done,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        text = stringResource(R.string.label_icon_optional),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        emojiOptions.forEach { option ->
+                            FilterChip(
+                                selected = emoji == option,
+                                // Tapping the selected one clears it, so "no icon" stays reachable.
+                                onClick = { emoji = if (emoji == option) "" else option },
+                                label = { Text(option) },
+                            )
+                        }
                     }
                 }
             }
@@ -94,12 +98,14 @@ fun NameEmojiDialog(
             ) { Text(confirmText) }
         },
         dismissButton = {
-            if (destructiveText != null && onDestructive != null) {
-                TextButton(onClick = onDestructive) {
-                    Text(destructiveText, color = MaterialTheme.colorScheme.error)
+            LifeOsOverlayLocalization {
+                if (destructiveText != null && onDestructive != null) {
+                    TextButton(onClick = onDestructive) {
+                        Text(destructiveText, color = MaterialTheme.colorScheme.error)
+                    }
+                } else {
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
                 }
-            } else {
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
             }
         },
     )
@@ -123,6 +129,10 @@ fun ConfirmDialog(
                 Text(confirmText, color = MaterialTheme.colorScheme.error)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = {
+            LifeOsOverlayLocalization {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+            }
+        },
     )
 }
