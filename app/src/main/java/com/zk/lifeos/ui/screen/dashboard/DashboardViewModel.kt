@@ -11,6 +11,7 @@ import com.zk.lifeos.service.HabitService
 import com.zk.lifeos.service.ProjectService
 import com.zk.lifeos.service.TaskService
 import com.zk.lifeos.ui.components.TaskDraft
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,7 @@ import java.time.LocalDate
  * The UI observes state flows and calls these actions; it never touches a repository or DAO.
  * Every write goes through a service, and the DB flows push the result back — no local mirroring.
  */
+@OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest
 class DashboardViewModel(
     dashboardService: DashboardService,
     projectService: ProjectService,

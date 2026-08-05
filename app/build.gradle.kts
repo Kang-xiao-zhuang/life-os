@@ -1,9 +1,25 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+/**
+ * Release signing credentials, from an untracked `keystore.properties` in the project root
+ * (see `keystore.properties.example`).
+ *
+ * Absent is not an error: a fresh clone without the key still builds, it just produces an unsigned
+ * release APK. Failing the build instead would make the repo unusable to anyone but this machine.
+ */
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use(::load)
+}
+val canSignRelease = keystoreProperties.getProperty("storeFile")
+    ?.let { rootProject.file(it).exists() } == true
 
 android {
     namespace = "com.zk.lifeos"
@@ -14,10 +30,23 @@ android {
         applicationId = "com.zk.lifeos"
         minSdk = 26
         targetSdk = 36
+        // Bump versionCode on every build you actually install — Android refuses to update an APK
+        // with a code equal to or lower than the installed one.
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
         // Needed for the instrumented backup round-trip test.
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (canSignRelease) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
@@ -25,6 +54,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (canSignRelease) signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"

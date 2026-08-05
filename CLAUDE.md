@@ -266,8 +266,35 @@ $sdk="C:\Users\TT603064\AppData\Local\Android\sdk"
 & "$sdk\platform-tools\adb.exe" shell am start -n com.zk.lifeos.debug/com.zk.lifeos.MainActivity
 ```
 
-Debug builds install as **`com.zk.lifeos.debug`** (`applicationIdSuffix`), so debug and a future
-release build can coexist on one device.
+Debug builds install as **`com.zk.lifeos.debug`** (`applicationIdSuffix`), so debug and the release
+build coexist on one device with separate databases.
+
+### Signed release build
+
+```powershell
+$env:JAVA_HOME="D:\Develop\jdk\jdk17"
+.\gradlew.bat :app:assembleRelease        # → app\build\outputs\apk\release\app-release.apk
+```
+
+Credentials come from an untracked `keystore.properties` in the project root; copy
+`keystore.properties.example` and fill it in. **The keystore lives outside the repo**
+(`C:\Users\TT603064\.keystores\lifeos-release.jks` on this machine) so that no `.gitignore` edit or
+`git add -f` can put a signing key into version control. `.gitignore` also blocks
+`keystore.properties`, `*.jks` and `*.keystore` as a second line of defence.
+
+If `keystore.properties` is missing the release build still succeeds — it just produces an unsigned
+APK. Failing instead would make the repo unbuildable for anyone but this machine.
+
+- **Losing the keystore means you can no longer update an installed copy.** Android refuses an
+  install whose signature differs, so the only way back is uninstall + reinstall, which deletes the
+  database. Export a backup first, and keep the `.jks` somewhere you actually back up.
+- **Bump `versionCode`** for every build you intend to install over an existing one.
+- Verify with `apksigner verify --print-certs <apk>` (build-tools 37.0.0). v2 scheme only, which is
+  all minSdk 26 needs.
+- **Always launch the release APK before handing it over.** R8 breakage is invisible at compile time:
+  minification, resource shrinking and the enum keep rule in `proguard-rules.pro` are only really
+  tested by running it. The paths worth exercising are a Room write, a language switch followed by
+  force-stop and relaunch (that one proves persisted enum names survived R8), and a reminder toggle.
 
 ### Gotchas
 

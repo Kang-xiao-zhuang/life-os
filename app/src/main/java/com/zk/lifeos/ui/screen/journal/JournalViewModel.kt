@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zk.lifeos.model.JournalEntry
 import com.zk.lifeos.service.JournalService
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,7 @@ import java.time.LocalDate
  * The editor is pointed at [selectedDate], not hard-wired to today: a review you can only write
  * before midnight is a review you skip on the evenings that were actually worth writing about.
  */
+@OptIn(ExperimentalCoroutinesApi::class) // flatMapLatest
 class JournalViewModel(private val journalService: JournalService) : ViewModel() {
 
     private val _selectedDate = MutableStateFlow(LocalDate.now())

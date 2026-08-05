@@ -9,6 +9,13 @@ build/
 ## Machine-specific
 local.properties
 
+## Signing — never commit a key or its passwords.
+# The keystore itself is kept outside the repo entirely; these patterns are the second line
+# of defence, not the first. keystore.properties.example IS tracked.
+keystore.properties
+*.jks
+*.keystore
+
 ## IDE
 *.iml
 .idea/
