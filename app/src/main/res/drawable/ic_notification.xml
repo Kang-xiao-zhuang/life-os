@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Notification small icon: the launcher's ring-and-dot mark, reduced to what survives at 24dp.
+
+  Solid white on a transparent background, because the system tints a notification icon and
+  discards colour — anything else shows up as a white blob in the status bar. Still a vector, so
+  the project keeps no binary assets.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- ring -->
+    <path
+        android:pathData="M12,3 a9,9 0 1,1 -0.01,0 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round" />
+
+    <!-- centre dot -->
+    <path
+        android:pathData="M12,8.5 a3.5,3.5 0 1,1 -0.01,0 Z"
+        android:fillColor="#FFFFFF" />
+</vector>

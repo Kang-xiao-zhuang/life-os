@@ -1,5 +1,12 @@
 package com.zk.lifeos.ui.screen.settings
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.text.format.DateFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -9,7 +16,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -17,9 +26,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimeInput
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,13 +43,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zk.lifeos.R
 import com.zk.lifeos.model.AppLanguage
 import com.zk.lifeos.model.BackupCounts
 import com.zk.lifeos.model.BackupFailure
+import com.zk.lifeos.model.ReminderKind
+import com.zk.lifeos.model.ReminderSettings
 import com.zk.lifeos.model.ThemeMode
+import com.zk.lifeos.ui.LifeOsOverlayLocalization
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.ConfirmDialog
 import com.zk.lifeos.ui.components.EmptyHint
@@ -45,7 +64,9 @@ import com.zk.lifeos.ui.currentLocale
 import com.zk.lifeos.widget.WidgetPinning
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 
@@ -64,6 +85,7 @@ fun SettingsScreen(
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val lastBackupAt by viewModel.lastBackupAt.collectAsStateWithLifecycle()
+    val reminders by viewModel.reminders.collectAsStateWithLifecycle()
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     val status by viewModel.status.collectAsStateWithLifecycle()
     var confirmImport by remember { mutableStateOf(false) }
@@ -127,6 +149,12 @@ fun SettingsScreen(
                 }
             }
         }
+
+        ReminderCard(
+            reminders = reminders,
+            onMorning = viewModel::setMorningReminder,
+            onEvening = viewModel::setEveningReminder,
+        )
 
         HomeScreenCard()
 
@@ -220,6 +248,207 @@ private fun summary(counts: BackupCounts): String = stringResource(
     counts.captures,
     counts.journalEntries,
 )
+
+/**
+ * 提醒 — the only thing in this app that interrupts you, and the only reason it asks for a
+ * permission at all.
+ *
+ * Two switches, two times. No per-habit or per-task schedules: 「不增加无意义配置」, and a morning
+ * glance plus an evening wrap-up already covers the day. The permission is requested **here**, at
+ * the moment a switch is turned on — asking at launch, before the user has any idea what for, is how
+ * you get a permanent "no".
+ */
+@Composable
+private fun ReminderCard(
+    reminders: ReminderSettings,
+    onMorning: (Boolean, LocalTime) -> Unit,
+    onEvening: (Boolean, LocalTime) -> Unit,
+) {
+    val context = LocalContext.current
+    var editing by remember { mutableStateOf<ReminderKind?>(null) }
+    // Which switch the user was turning on when the permission dialog appeared.
+    var awaitingPermission by remember { mutableStateOf<ReminderKind?>(null) }
+
+    // Re-read on every resume: the user may have come back from the system settings screen, where
+    // notifications can be switched off behind the app's back.
+    var systemCheck by remember { mutableIntStateOf(0) }
+    LifecycleResumeEffect(Unit) {
+        systemCheck++
+        onPauseOrDispose {}
+    }
+    val notificationsAllowed = remember(systemCheck) {
+        NotificationManagerCompat.from(context).areNotificationsEnabled()
+    }
+
+    val enable: (ReminderKind) -> Unit = { kind ->
+        when (kind) {
+            ReminderKind.MORNING -> onMorning(true, reminders.morningTime)
+            ReminderKind.EVENING -> onEvening(true, reminders.eveningTime)
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val kind = awaitingPermission
+        awaitingPermission = null
+        systemCheck++
+        // Denied: leave the switch off rather than pretending it's on. A reminder that can't be
+        // delivered is worse than an obviously-off switch.
+        if (granted && kind != null) enable(kind)
+    }
+
+    val toggle: (ReminderKind, Boolean) -> Unit = { kind, wanted ->
+        if (!wanted) {
+            when (kind) {
+                ReminderKind.MORNING -> onMorning(false, reminders.morningTime)
+                ReminderKind.EVENING -> onEvening(false, reminders.eveningTime)
+            }
+        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || notificationsAllowed) {
+            enable(kind)
+        } else {
+            awaitingPermission = kind
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    SectionCard(title = stringResource(R.string.settings_reminders)) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            EmptyHint(stringResource(R.string.reminder_hint))
+
+            ReminderRow(
+                label = stringResource(R.string.reminder_morning),
+                enabled = reminders.morningEnabled,
+                time = reminders.morningTime,
+                onToggle = { toggle(ReminderKind.MORNING, it) },
+                onEditTime = { editing = ReminderKind.MORNING },
+            )
+            ReminderRow(
+                label = stringResource(R.string.reminder_evening),
+                enabled = reminders.eveningEnabled,
+                time = reminders.eveningTime,
+                onToggle = { toggle(ReminderKind.EVENING, it) },
+                onEditTime = { editing = ReminderKind.EVENING },
+            )
+
+            // Only worth saying when something is switched on but can't actually be delivered.
+            if (reminders.anyEnabled && !notificationsAllowed) {
+                Text(
+                    text = stringResource(R.string.reminder_blocked),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                OutlinedButton(onClick = { context.openNotificationSettings() }) {
+                    Text(stringResource(R.string.reminder_open_system_settings))
+                }
+            }
+        }
+    }
+
+    editing?.let { kind ->
+        TimeDialog(
+            initial = reminders.time(kind),
+            onDismiss = { editing = null },
+            onPicked = { time ->
+                editing = null
+                // Changing the time also arms it — you don't set a time for a reminder you don't want.
+                when (kind) {
+                    ReminderKind.MORNING -> onMorning(reminders.morningEnabled, time)
+                    ReminderKind.EVENING -> onEvening(reminders.eveningEnabled, time)
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun ReminderRow(
+    label: String,
+    enabled: Boolean,
+    time: LocalTime,
+    onToggle: (Boolean) -> Unit,
+    onEditTime: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        // Tappable whether or not the switch is on: picking the time first and then enabling is a
+        // perfectly normal order to do it in.
+        TextButton(onClick = onEditTime) { Text(formatTime(time)) }
+        Switch(checked = enabled, onCheckedChange = onToggle)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TimeDialog(
+    initial: LocalTime,
+    onDismiss: () -> Unit,
+    onPicked: (LocalTime) -> Unit,
+) {
+    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
+    val state = rememberTimePickerState(
+        initialHour = initial.hour,
+        initialMinute = initial.minute,
+        is24Hour = is24Hour,
+    )
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            LifeOsOverlayLocalization { Text(stringResource(R.string.reminder_time_title)) }
+        },
+        // TimeInput, not the clock dial: typing 21:30 is faster than spinning to it, and it fits a
+        // dialog without the layout gymnastics the dial needs.
+        text = { LifeOsOverlayLocalization { TimeInput(state = state) } },
+        confirmButton = {
+            LifeOsOverlayLocalization {
+                TextButton(onClick = { onPicked(LocalTime.of(state.hour, state.minute)) }) {
+                    Text(stringResource(R.string.action_ok))
+                }
+            }
+        },
+        dismissButton = {
+            LifeOsOverlayLocalization {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+            }
+        },
+    )
+}
+
+/** 24-hour or 12-hour according to the *device* setting, not the app's language. */
+@Composable
+private fun formatTime(time: LocalTime): String {
+    val is24Hour = DateFormat.is24HourFormat(LocalContext.current)
+    val locale = currentLocale()
+    val formatter = remember(is24Hour, locale) {
+        DateTimeFormatter.ofPattern(if (is24Hour) "HH:mm" else "h:mm a", locale)
+    }
+    return time.format(formatter)
+}
+
+/** Straight to LifeOS's own notification settings; the app list is two more taps away. */
+private fun Context.openNotificationSettings() {
+    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    // Some OEM builds don't handle it; falling back to the app's detail page beats doing nothing.
+    runCatching { startActivity(intent) }.onFailure {
+        runCatching {
+            startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.fromParts("package", packageName, null))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        }
+    }
+}
 
 /** 桌面快捷记录 — offered here because nobody discovers widgets by browsing the widget picker. */
 @Composable

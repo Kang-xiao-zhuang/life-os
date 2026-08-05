@@ -2,9 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-      LifeOS is local-first and offline-first: it declares NO permissions at all.
-      No internet, no account, no analytics. Everything lives in the app's private storage.
+      LifeOS is local-first and offline-first: no internet, no account, no analytics. Everything
+      lives in the app's private storage.
+
+      These two are the ONLY permissions, and both exist for one feature — the daily reminders the
+      user switches on themselves in 设置. Neither can send anything anywhere; there is still no
+      INTERNET permission, so the app physically cannot talk to a network.
     -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Alarms do not survive a reboot. Without this, a phone restarted overnight silently stops
+         reminding until the app is next opened by hand — which defeats the point of a reminder. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".LifeOsApplication"
@@ -35,6 +43,12 @@
                 <action android:name="com.zk.lifeos.action.QUICK_CAPTURE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <!-- Tapping a reminder: the morning one opens 首页, the evening one opens 复盘. -->
+            <intent-filter>
+                <action android:name="com.zk.lifeos.action.OPEN_TODAY" />
+                <action android:name="com.zk.lifeos.action.OPEN_REVIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <receiver
@@ -46,6 +60,20 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/capture_widget_info" />
+        </receiver>
+
+        <!--
+          Daily reminders. The alarms target this receiver by explicit component, so the filter is
+          only for the two system broadcasts that mean "your alarms are gone, set them again".
+          exported="false" is correct even so: protected system broadcasts still reach it.
+        -->
+        <receiver
+            android:name=".notify.ReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
         </receiver>
     </application>
 

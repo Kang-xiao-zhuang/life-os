@@ -7,8 +7,10 @@ import com.zk.lifeos.model.AppLanguage
 import com.zk.lifeos.model.BackupCounts
 import com.zk.lifeos.model.BackupFailure
 import com.zk.lifeos.model.BackupResult
+import com.zk.lifeos.model.ReminderSettings
 import com.zk.lifeos.model.ThemeMode
 import com.zk.lifeos.service.BackupService
+import com.zk.lifeos.service.ReminderService
 import com.zk.lifeos.service.SettingsService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalTime
 
 /**
  * What the last export/import did — as data, not as a sentence.
@@ -35,6 +38,7 @@ sealed interface BackupStatus {
 class SettingsViewModel(
     private val settingsService: SettingsService,
     private val backupService: BackupService,
+    private val reminderService: ReminderService,
 ) : ViewModel() {
 
     val themeMode: StateFlow<ThemeMode> = settingsService.themeMode
@@ -46,6 +50,9 @@ class SettingsViewModel(
     /** null = never exported. */
     val lastBackupAt: StateFlow<Instant?> = settingsService.lastBackupAt
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val reminders: StateFlow<ReminderSettings> = reminderService.settings
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ReminderSettings())
 
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
@@ -59,6 +66,14 @@ class SettingsViewModel(
 
     fun setLanguage(language: AppLanguage) {
         viewModelScope.launch { settingsService.setLanguage(language) }
+    }
+
+    fun setMorningReminder(enabled: Boolean, time: LocalTime) {
+        viewModelScope.launch { reminderService.setMorning(enabled, time) }
+    }
+
+    fun setEveningReminder(enabled: Boolean, time: LocalTime) {
+        viewModelScope.launch { reminderService.setEvening(enabled, time) }
     }
 
     fun suggestedFileName(): String = backupService.suggestedFileName()

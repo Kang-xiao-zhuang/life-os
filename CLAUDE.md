@@ -114,6 +114,11 @@ instrumented tests.
 - A task's 备注 shows as one ellipsized line on its row, but only while the task is open — on a
   finished task it is no longer a reminder, just noise. `TaskRow` aligns to `Alignment.Top` because
   a row can now be three lines tall and a centred tick reads as belonging to the second line.
+- **`DashboardService.observe(today)` takes the date as a parameter.** It used to read
+  `LocalDate.now()` itself, which froze the day at whatever it was when the flow was first built:
+  a resident app showed yesterday's date and ran yesterday's queries after midnight.
+  `DashboardViewModel` keeps it in a `MutableStateFlow` and `refreshToday()` on
+  `LifecycleResumeEffect`. Reminders pass a fresh date at firing time.
 
 - Phase 4 added 导出 / 导入 (`LifeOS_Backup.zip`), finished the settings page, and **closed the
   destructive-migration risk** (see Database above — there is no `fallbackToDestructiveMigration`
@@ -276,6 +281,44 @@ release build can coexist on one device.
 - The `-Xannotation-default-target=param-property` compiler arg in `app/build.gradle.kts` silences
   the Kotlin warning about annotations on constructor `val`s; keep it rather than annotating
   every site.
+
+### Reminders (and the end of "zero permissions")
+
+The app used to declare **no permissions at all**, and the About card said so. Reminders changed
+that, and the copy changed with it. Two permissions, both only for this feature:
+`POST_NOTIFICATIONS` and `RECEIVE_BOOT_COMPLETED`. There is still **no `INTERNET`**, so the claim
+that matters — it cannot talk to a network — is unchanged. Don't reintroduce "零权限" anywhere.
+
+Shape: exactly two reminders (`ReminderKind.MORNING` / `EVENING`), each a switch plus a time, both
+**default off**. No per-habit or per-task schedules — 「不增加无意义配置」.
+
+- **`ReminderNotifier` posts nothing when there is nothing to say.** Morning skips when no MIT,
+  nothing due and nothing overdue; evening skips when every habit is checked and the review is
+  written. A notification that reports "all clear" every day is why people disable notifications,
+  and it takes the useful ones with it. This is the feature's most important rule.
+- Wording lives in `notify/`, not in the service — a service has no resources. Text goes through
+  `context.localized(LifeOsApplication.currentLanguage)` so notifications follow the *in-app*
+  language, not the phone's.
+- **`setAndAllowWhileIdle`, deliberately inexact.** Exact alarms need `SCHEDULE_EXACT_ALARM` (and
+  Play reserves `USE_EXACT_ALARM` for alarm-clock apps) — too much for a nudge. The OS gives it a
+  **~1 hour window**, visible in `dumpsys alarm` as `window=+1h0m0s0ms`. Accepted and documented in
+  the README: guaranteed delivery (it fires in Doze) beats punctuality here.
+- No repeating alarm: each firing arms the next day, and `LifeOsApplication` re-arms on every launch
+  while `ReminderReceiver` handles `BOOT_COMPLETED` / `MY_PACKAGE_REPLACED`. So a missed schedule
+  always heals. `ReminderService.fire` re-arms **unconditionally**, including on a quiet day — doing
+  it only when a notification was posted would end the chain the first silent evening.
+- The two alarms' `PendingIntent`s differ by a `data` URI (`lifeos://reminder/MORNING`). Extras are
+  ignored by `PendingIntent` equality, so without that they would be the same alarm and the second
+  would overwrite the first.
+
+**Testing reminders on the emulator** — two traps that each cost a round:
+
+- `adb shell am broadcast -n .../ReminderReceiver` **never arrives**, even after `adb root`: the
+  receiver is `exported="false"` and shell/root is not exempt. `am` still prints
+  `Broadcast completed: result=0`, so it looks like it worked.
+- Moving the clock past the trigger time is not enough. An inexact alarm fires when the clock passes
+  the **end of its window**, so for a 21:30 alarm you must jump to after 22:30. Set the date with
+  `adb root; adb shell "date MMDDhhmmYYYY.ss"`, and restore it from the host afterwards.
 
 ### Localisation (read this before touching any UI text)
 

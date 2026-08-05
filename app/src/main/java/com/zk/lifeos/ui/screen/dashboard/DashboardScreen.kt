@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zk.lifeos.R
@@ -67,6 +68,12 @@ fun DashboardScreen(
     val projects by viewModel.projects.collectAsStateWithLifecycle()
     val mitCount by viewModel.mitCount.collectAsStateWithLifecycle()
     var editor by remember { mutableStateOf<Editor>(Editor.None) }
+
+    // Coming back to a resident app after midnight must not leave 今天 pointing at yesterday.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshToday()
+        onPauseOrDispose {}
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()

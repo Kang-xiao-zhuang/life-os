@@ -11,8 +11,10 @@ import com.zk.lifeos.service.HabitService
 import com.zk.lifeos.service.ProjectService
 import com.zk.lifeos.service.TaskService
 import com.zk.lifeos.ui.components.TaskDraft
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -28,13 +30,26 @@ class DashboardViewModel(
     private val habitService: HabitService,
 ) : ViewModel() {
 
-    val state: StateFlow<DashboardSnapshot> = dashboardService.observe()
+    /**
+     * Which day 首页 is showing. Re-read when the screen resumes rather than fixed at construction:
+     * a phone left on the Dashboard overnight was still showing yesterday, which also made a morning
+     * reminder open onto the wrong day.
+     */
+    private val today = MutableStateFlow(LocalDate.now())
+
+    val state: StateFlow<DashboardSnapshot> = today
+        .flatMapLatest { dashboardService.observe(it) }
         .stateIn(
             scope = viewModelScope,
             // Keep collecting briefly across config changes instead of restarting the queries.
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = DashboardSnapshot(today = LocalDate.now()),
         )
+
+    /** Called when the screen comes back to the foreground; a no-op unless the date really changed. */
+    fun refreshToday() {
+        today.value = LocalDate.now()
+    }
 
     /** Needed by the task editor so a task can be moved between projects from here. */
     val projects: StateFlow<List<ProjectSummary>> = projectService.observeProjects()

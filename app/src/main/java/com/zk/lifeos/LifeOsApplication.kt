@@ -44,6 +44,15 @@ class LifeOsApplication : Application() {
                 CaptureWidgetProvider.refreshAll(this@LifeOsApplication, language)
             }
         }
+
+        // Same shape for reminders: the first emission re-arms whatever was stored (covering an
+        // alarm lost to a reboot or a force-stop), and later ones apply the user's edits. Settings
+        // therefore only has to write a preference — it never touches AlarmManager.
+        scope.launch {
+            container.reminderService.settings.distinctUntilChanged().collect {
+                container.reminderService.sync()
+            }
+        }
     }
 
     /**

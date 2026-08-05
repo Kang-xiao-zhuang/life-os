@@ -256,8 +256,30 @@
     <string name="settings_add_widget">Add to home screen</string>
     <string name="settings_widget_unsupported">This launcher can\'t add it for you — long-press an empty spot on the home screen and find LifeOS in the widget list.</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_text">LifeOS · a local-first personal workbench. Your data stays on this device: no account, no network, no permissions.</string>
+    <string name="settings_about_text">LifeOS · a local-first personal workbench. Your data stays on this device: no account, no network. The only permission it asks for is notifications, and only for the reminders you set yourself.</string>
     <string name="settings_version">v%1$s</string>
+
+    <!-- ===== reminders ===== -->
+    <string name="settings_reminders">Reminders</string>
+    <string name="reminder_hint">You only hear from LifeOS when there is something to say — nothing due, habits all checked, review written, and it stays quiet.</string>
+    <string name="reminder_morning">Morning · what today holds</string>
+    <string name="reminder_evening">Evening · wrap up</string>
+    <string name="reminder_morning_switch">Morning reminder</string>
+    <string name="reminder_evening_switch">Evening reminder</string>
+    <string name="reminder_time_title">Reminder time</string>
+    <string name="reminder_blocked">Notifications are switched off for LifeOS, so reminders can\'t reach you.</string>
+    <string name="reminder_open_system_settings">Open system settings</string>
+
+    <!-- ===== reminder notifications ===== -->
+    <string name="notif_channel_reminders">Daily reminders</string>
+    <string name="notif_channel_reminders_description">The morning and evening nudges you set up in LifeOS.</string>
+    <string name="notif_morning_title">Today</string>
+    <string name="notif_morning_mit">%1$d most important</string>
+    <string name="notif_morning_due">%1$d due today</string>
+    <string name="notif_morning_overdue">%1$d overdue</string>
+    <string name="notif_evening_title">Wrap up the day</string>
+    <string name="notif_evening_habits">%1$d habits not checked in</string>
+    <string name="notif_evening_journal">Review not written</string>
 
     <!-- ===== backup results ===== -->
     <string name="backup_exported">Exported: %1$s</string>

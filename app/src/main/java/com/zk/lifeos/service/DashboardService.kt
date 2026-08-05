@@ -21,8 +21,15 @@ class DashboardService(
     private val captureRepository: CaptureRepository,
 ) {
 
-    fun observe(): Flow<DashboardSnapshot> {
-        val today = LocalDate.now()
+    /**
+     * [today] is a parameter, not something this function reads from the clock.
+     *
+     * It used to call `LocalDate.now()` itself, which looked harmless but froze the day at whatever
+     * it was when the flow was first built: leave the app resident overnight and 首页 still shows
+     * yesterday's date and yesterday's queries. The caller decides which day it wants, and can ask
+     * again — see `DashboardViewModel.refreshToday`.
+     */
+    fun observe(today: LocalDate = LocalDate.now()): Flow<DashboardSnapshot> {
         return combine(
             taskRepository.observeMit(today),
             taskRepository.observeDueBy(today),

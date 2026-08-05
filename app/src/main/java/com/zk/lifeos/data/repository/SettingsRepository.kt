@@ -2,10 +2,12 @@ package com.zk.lifeos.data.repository
 
 import com.zk.lifeos.data.prefs.AppPreferences
 import com.zk.lifeos.model.AppLanguage
+import com.zk.lifeos.model.ReminderSettings
 import com.zk.lifeos.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
+import java.time.LocalTime
 
 /**
  * Settings persistence. The repository owns the storage format (strings and epoch millis in
@@ -27,4 +29,25 @@ class SettingsRepository(private val prefs: AppPreferences) {
     }
 
     suspend fun markBackedUpNow() = prefs.setLastBackupAt(System.currentTimeMillis())
+
+    /** The two daily reminders. Missing values fall back to the product defaults, never to 00:00. */
+    val reminders: Flow<ReminderSettings> = prefs.reminders.map { stored ->
+        ReminderSettings(
+            morningEnabled = stored.morningEnabled,
+            morningTime = stored.morningMinutes?.toLocalTime() ?: ReminderSettings.DEFAULT_MORNING,
+            eveningEnabled = stored.eveningEnabled,
+            eveningTime = stored.eveningMinutes?.toLocalTime() ?: ReminderSettings.DEFAULT_EVENING,
+        )
+    }
+
+    suspend fun setMorningReminder(enabled: Boolean, time: LocalTime) =
+        prefs.setMorningReminder(enabled, time.toMinuteOfDay())
+
+    suspend fun setEveningReminder(enabled: Boolean, time: LocalTime) =
+        prefs.setEveningReminder(enabled, time.toMinuteOfDay())
+
+    private fun Int.toLocalTime(): LocalTime =
+        LocalTime.of((this / 60).coerceIn(0, 23), (this % 60).coerceIn(0, 59))
+
+    private fun LocalTime.toMinuteOfDay(): Int = hour * 60 + minute
 }

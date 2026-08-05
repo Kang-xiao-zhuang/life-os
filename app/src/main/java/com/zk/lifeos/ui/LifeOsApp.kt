@@ -24,6 +24,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.zk.lifeos.ui.navigation.LaunchRequest
+import com.zk.lifeos.ui.navigation.LaunchTarget
 import com.zk.lifeos.ui.navigation.Routes
 import com.zk.lifeos.ui.navigation.TopLevelDestination
 import com.zk.lifeos.ui.screen.capture.CaptureScreen
@@ -44,7 +46,7 @@ import com.zk.lifeos.ui.screen.tasks.AllTasksScreen
  * a tab rather than being tabs themselves.
  */
 @Composable
-fun LifeOsApp(captureRequest: Int = 0) {
+fun LifeOsApp(launchRequest: LaunchRequest = LaunchRequest()) {
     val navController = rememberNavController()
     // Set when the widget/shortcut asked for capture, cleared once the field has taken focus, so
     // coming back to the tab later doesn't pop the keyboard again.
@@ -60,12 +62,17 @@ fun LifeOsApp(captureRequest: Int = 0) {
         Routes.ARCHIVED_HABITS,
     )
 
-    // Jump straight to the capture field when opened from the home screen. Keyed on the counter,
-    // so tapping the widget again re-triggers it.
-    LaunchedEffect(captureRequest) {
-        if (captureRequest > 0) {
-            autoFocusCapture = true
-            navController.navigateToTab(TopLevelDestination.CAPTURE)
+    // Land where the widget, shortcut or reminder pointed us. Keyed on the whole request (target +
+    // serial) so tapping the same entry point again re-triggers the jump.
+    LaunchedEffect(launchRequest) {
+        if (!launchRequest.isPending) return@LaunchedEffect
+        when (launchRequest.target) {
+            LaunchTarget.CAPTURE -> {
+                autoFocusCapture = true
+                navController.navigateToTab(TopLevelDestination.CAPTURE)
+            }
+            LaunchTarget.TODAY -> navController.navigateToTab(TopLevelDestination.DASHBOARD)
+            LaunchTarget.REVIEW -> navController.navigateToTab(TopLevelDestination.JOURNAL)
         }
     }
 

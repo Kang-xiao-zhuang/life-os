@@ -237,8 +237,30 @@
     <string name="settings_add_widget">添加到桌面</string>
     <string name="settings_widget_unsupported">这个桌面不支持一键添加,请长按桌面空白处,从小组件列表里找 LifeOS。</string>
     <string name="settings_about">关于</string>
-    <string name="settings_about_text">LifeOS · 本地优先的个人工作台。数据只存在这台设备上,没有账号,不联网,零权限。</string>
+    <string name="settings_about_text">LifeOS · 本地优先的个人工作台。数据只存在这台设备上,没有账号,不联网。唯一用到的权限是通知,只用来发你自己设的提醒。</string>
     <string name="settings_version">v%1$s</string>
+
+    <!-- ===== 提醒 ===== -->
+    <string name="settings_reminders">提醒</string>
+    <string name="reminder_hint">只在真的有内容时才提醒 —— 没有待办、习惯都打完、复盘也写了,就不打扰你。</string>
+    <string name="reminder_morning">早上 · 看一眼今天</string>
+    <string name="reminder_evening">晚上 · 收个尾</string>
+    <string name="reminder_morning_switch">早上提醒</string>
+    <string name="reminder_evening_switch">晚上提醒</string>
+    <string name="reminder_time_title">提醒时间</string>
+    <string name="reminder_blocked">系统里 LifeOS 的通知是关着的,提醒发不出来。</string>
+    <string name="reminder_open_system_settings">去系统设置打开</string>
+
+    <!-- ===== 提醒通知 ===== -->
+    <string name="notif_channel_reminders">每日提醒</string>
+    <string name="notif_channel_reminders_description">你在 LifeOS 里设的早晚提醒。</string>
+    <string name="notif_morning_title">今天</string>
+    <string name="notif_morning_mit">最重要 %1$d 件</string>
+    <string name="notif_morning_due">今天到期 %1$d 项</string>
+    <string name="notif_morning_overdue">逾期 %1$d 项</string>
+    <string name="notif_evening_title">收个尾</string>
+    <string name="notif_evening_habits">%1$d 个习惯还没打卡</string>
+    <string name="notif_evening_journal">复盘还没写</string>
 
     <!-- ===== 备份结果 ===== -->
     <string name="backup_exported">已导出:%1$s</string>

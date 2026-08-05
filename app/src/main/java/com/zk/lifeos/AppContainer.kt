@@ -10,12 +10,15 @@ import com.zk.lifeos.data.repository.JournalRepository
 import com.zk.lifeos.data.repository.ProjectRepository
 import com.zk.lifeos.data.repository.SettingsRepository
 import com.zk.lifeos.data.repository.TaskRepository
+import com.zk.lifeos.notify.ReminderNotifier
+import com.zk.lifeos.notify.ReminderScheduler
 import com.zk.lifeos.service.BackupService
 import com.zk.lifeos.service.CaptureService
 import com.zk.lifeos.service.DashboardService
 import com.zk.lifeos.service.HabitService
 import com.zk.lifeos.service.JournalService
 import com.zk.lifeos.service.ProjectService
+import com.zk.lifeos.service.ReminderService
 import com.zk.lifeos.service.SettingsService
 import com.zk.lifeos.service.TaskService
 
@@ -77,4 +80,15 @@ class AppContainer(context: Context) {
     val captureService: CaptureService by lazy { CaptureService(captureRepository, taskRepository) }
 
     val backupService: BackupService by lazy { BackupService(backupStore, settingsRepository) }
+
+    val reminderService: ReminderService by lazy {
+        ReminderService(
+            settingsRepository = settingsRepository,
+            // Reminders describe the same 「今天」the Dashboard does, so they read it from the same
+            // place — two definitions of today would eventually disagree.
+            dashboardService = dashboardService,
+            scheduler = ReminderScheduler(appContext),
+            notifier = ReminderNotifier(appContext),
+        )
+    }
 }
