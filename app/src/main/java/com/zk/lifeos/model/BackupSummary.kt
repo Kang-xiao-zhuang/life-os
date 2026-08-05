@@ -10,23 +10,37 @@ data class BackupCounts(
     val journalEntries: Int = 0,
 ) {
     val total: Int get() = projects + tasks + habits + habitChecks + captures + journalEntries
-
-    /** 「4 项目 · 11 任务 · 4 习惯 · 20 打卡 · 3 记录 · 2 复盘」 */
-    fun describe(): String = listOf(
-        "$projects 项目",
-        "$tasks 任务",
-        "$habits 习惯",
-        "$habitChecks 打卡",
-        "$captures 记录",
-        "$journalEntries 复盘",
-    ).joinToString(" · ")
 }
 
 /**
- * Outcome of an export or import. A failure carries a message meant for the user, not a stack
- * trace — this is a personal app and the only person who can act on it is the one holding it.
+ * Why a backup failed, as a *type* rather than a message.
+ *
+ * The data and service layers must not build user-facing text: they have no access to string
+ * resources, so any message they wrote would be stuck in one language. The UI turns these into
+ * words.
  */
+sealed interface BackupFailure {
+    /** The chosen destination could not be opened for writing. */
+    data object CannotWrite : BackupFailure
+
+    /** The chosen file could not be opened for reading. */
+    data object CannotRead : BackupFailure
+
+    /** No `database.db` inside — almost certainly not a LifeOS backup. */
+    data object NotABackup : BackupFailure
+
+    /** The archive was written by a version with a different schema. */
+    data class SchemaMismatch(val backupVersion: Int, val appVersion: Int) : BackupFailure
+
+    /** Anything else; [message] is a technical detail, not a translated sentence. */
+    data class Unexpected(val message: String?) : BackupFailure
+}
+
+/** Thrown inside the backup code so the service can map it to a [BackupFailure] without parsing text. */
+class BackupException(val failure: BackupFailure) : Exception(failure.toString())
+
+/** Outcome of an export or import. */
 sealed interface BackupResult {
     data class Success(val counts: BackupCounts) : BackupResult
-    data class Failure(val message: String) : BackupResult
+    data class Failure(val failure: BackupFailure) : BackupResult
 }

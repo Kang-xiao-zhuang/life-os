@@ -16,15 +16,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.R
 import com.zk.lifeos.model.ArchivedHabit
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.ConfirmDialog
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
+import com.zk.lifeos.ui.components.checkinCount
 
 /**
  * 已归档的习惯 — retired, not lost.
@@ -43,17 +46,17 @@ fun ArchivedHabitsScreen(
     var deleting by remember { mutableStateOf<ArchivedHabit?>(null) }
 
     LifeOsScreen(
-        title = "已归档",
+        title = stringResource(R.string.archived_title),
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
             }
         },
     ) {
         if (habits.isEmpty()) {
-            SectionCard(title = "没有归档的习惯") {
-                EmptyHint("长按一个习惯可以归档它。归档后打卡记录都还在,以后想继续随时恢复。")
+            SectionCard(title = stringResource(R.string.archived_habits_empty_title)) {
+                EmptyHint(stringResource(R.string.archived_habits_empty_hint))
             }
             return@LifeOsScreen
         }
@@ -61,33 +64,32 @@ fun ArchivedHabitsScreen(
         habits.forEach { habit ->
             SectionCard(
                 title = if (habit.emoji.isEmpty()) habit.name else "${habit.emoji}  ${habit.name}",
-                trailing = "${habit.checkCount} 次打卡",
+                trailing = checkinCount(habit.checkCount),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TextButton(onClick = { viewModel.restore(habit.id) }) { Text("恢复") }
+                    TextButton(onClick = { viewModel.restore(habit.id) }) { Text(stringResource(R.string.action_restore)) }
                     TextButton(onClick = { deleting = habit }) {
-                        Text("彻底删除", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.action_delete_forever), color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            EmptyHint("恢复后它会重新回到今天的清单里,连续天数按原来的记录继续算。")
-            EmptyHint("彻底删除会把这个习惯的全部打卡记录一起删掉,没法撤销。")
+            EmptyHint(stringResource(R.string.archived_habits_restore_note))
+            EmptyHint(stringResource(R.string.archived_habits_delete_note))
         }
     }
 
     deleting?.let { habit ->
         ConfirmDialog(
-            title = "彻底删除「${habit.name}」?",
+            title = stringResource(R.string.archived_habit_delete_title, habit.name),
             message = if (habit.checkCount == 0) {
-                "这个习惯会被永久删除,无法恢复。"
+                stringResource(R.string.archived_habit_delete_message_empty)
             } else {
-                "这个习惯和它的 ${habit.checkCount} 次打卡记录会被永久删除,无法恢复。" +
-                    "如果只是暂时不做了,留在归档里就好。"
+                stringResource(R.string.archived_habit_delete_message, habit.checkCount)
             },
-            confirmText = "彻底删除",
+            confirmText = stringResource(R.string.action_delete_forever),
             onDismiss = { deleting = null },
             onConfirm = {
                 viewModel.deletePermanently(habit.id)

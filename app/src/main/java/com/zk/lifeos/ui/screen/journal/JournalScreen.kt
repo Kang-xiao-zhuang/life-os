@@ -18,15 +18,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.R
 import com.zk.lifeos.model.JournalEntry
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
+import com.zk.lifeos.ui.components.entryCount
 
 /**
  * 每日复盘 — one entry per day, four fixed prompts, saved as written (Markdown is stored
@@ -43,40 +46,43 @@ fun JournalScreen(modifier: Modifier = Modifier) {
     // Today's entry is edited above, so it isn't repeated in the history list.
     val history = recent.filter { it.date != draft.date }
 
-    LifeOsScreen(title = "复盘", modifier = modifier) {
+    LifeOsScreen(title = stringResource(R.string.journal_title), modifier = modifier) {
         SectionCard(
-            title = "今天",
+            title = stringResource(R.string.label_today),
             trailing = when {
-                dirty -> "未保存"
-                draft.isEmpty -> "未写"
-                else -> "已写"
+                dirty -> stringResource(R.string.journal_unsaved)
+                draft.isEmpty -> stringResource(R.string.journal_not_written)
+                else -> stringResource(R.string.journal_written)
             },
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Field("今天完成了什么", draft.done, viewModel::setDone)
-                Field("今天最大的收获", draft.win, viewModel::setWin)
-                Field("今天遇到的问题", draft.problems, viewModel::setProblems)
-                Field("明天最重要的一件事", draft.tomorrowMit, viewModel::setTomorrowMit)
+                Field(stringResource(R.string.journal_q_done), draft.done, viewModel::setDone)
+                Field(stringResource(R.string.journal_q_win), draft.win, viewModel::setWin)
+                Field(stringResource(R.string.journal_q_problems), draft.problems, viewModel::setProblems)
+                Field(stringResource(R.string.journal_q_tomorrow), draft.tomorrowMit, viewModel::setTomorrowMit)
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Button(onClick = viewModel::save, enabled = dirty) { Text("保存") }
+                    Button(onClick = viewModel::save, enabled = dirty) { Text(stringResource(R.string.action_save)) }
                 }
                 if (dirty) {
-                    EmptyHint("改动还没保存。")
+                    EmptyHint(stringResource(R.string.journal_unsaved_hint))
                 }
             }
         }
 
         if (history.isNotEmpty()) {
-            SectionCard(title = "以前", trailing = "${history.size} 篇") {
+            SectionCard(
+                title = stringResource(R.string.journal_history),
+                trailing = entryCount(history.size),
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     history.forEach { entry ->
                         HistoryRow(entry = entry, onClick = { viewing = entry })
                     }
-                    EmptyHint("点一条可以看当天写的全部内容。")
+                    EmptyHint(stringResource(R.string.journal_history_hint))
                 }
             }
         }
@@ -99,7 +105,7 @@ private fun HistoryRow(entry: JournalEntry, onClick: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Text(
-            text = "${entry.date.monthValue}/${entry.date.dayOfMonth}",
+            text = stringResource(R.string.date_short, entry.date.monthValue, entry.date.dayOfMonth),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
         )

@@ -23,8 +23,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.zk.lifeos.R
 import com.zk.lifeos.model.HabitToday
 
 /**
@@ -76,7 +78,11 @@ fun HabitRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = if (habit.streak > 0) "连续 ${habit.streak} 天" else "本周 ${habit.weekDoneCount}/7",
+                text = if (habit.streak > 0) {
+                    stringResource(R.string.habit_streak, habit.streak)
+                } else {
+                    stringResource(R.string.habit_week_progress, habit.weekDoneCount)
+                },
                 style = MaterialTheme.typography.labelSmall,
                 color = scheme.outline,
             )

@@ -13,10 +13,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.R
 import com.zk.lifeos.model.HabitToday
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.ConfirmDialog
@@ -27,8 +30,7 @@ import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.NameEmojiDialog
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.components.habitEmojis
-
-private val weekdayLabels = listOf("一", "二", "三", "四", "五", "六", "日")
+import com.zk.lifeos.ui.components.pieceCount
 
 /**
  * 习惯 — tap a row to check today off (tap again to undo), long-press to edit or delete.
@@ -49,16 +51,19 @@ fun HabitsScreen(
     var archiving by remember { mutableStateOf<HabitToday?>(null) }
 
     LifeOsScreen(
-        title = "习惯",
+        title = stringResource(R.string.habits_title),
         modifier = modifier,
-        floatingActionButton = { LifeOsFab("新习惯") { creating = true } },
+        floatingActionButton = { LifeOsFab(stringResource(R.string.habit_new)) { creating = true } },
     ) {
         if (habits.isEmpty()) {
-            SectionCard(title = "还没有习惯") {
-                EmptyHint("每天坚持的小事:📚 阅读 · 🏋 健身 · ✍ 写作 · 🎥 内容创作 · 🇬🇧 英语学习。")
+            SectionCard(title = stringResource(R.string.habits_empty_title)) {
+                EmptyHint(stringResource(R.string.habits_empty_hint))
             }
         } else {
-            SectionCard(title = "今天", trailing = "$checkedToday / ${habits.size}") {
+            SectionCard(
+                title = stringResource(R.string.habits_today),
+                trailing = stringResource(R.string.habit_progress, checkedToday, habits.size),
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     WeekdayHeader()
                     habits.forEach { habit ->
@@ -68,12 +73,12 @@ fun HabitsScreen(
                             onLongClick = { editing = habit },
                         )
                     }
-                    EmptyHint("点一下打卡,再点一下取消;长按可以编辑。")
+                    EmptyHint(stringResource(R.string.habits_hint))
                 }
             }
 
             // Neutral title: the card can be paged back to earlier months, so「这个月」would lie.
-            SectionCard(title = "月度打卡") {
+            SectionCard(title = stringResource(R.string.habits_month)) {
                 HabitHeatmap(
                     month = month,
                     onPreviousMonth = viewModel::showPreviousMonth,
@@ -83,18 +88,22 @@ fun HabitsScreen(
         }
 
         if (archivedCount > 0) {
-            SectionCard(title = "已归档", trailing = "$archivedCount 个", onClick = onOpenArchived) {
-                EmptyHint("停下来的习惯在这里,打卡记录都留着,想继续随时恢复。")
+            SectionCard(
+                title = stringResource(R.string.archived_title),
+                trailing = pieceCount(archivedCount),
+                onClick = onOpenArchived,
+            ) {
+                EmptyHint(stringResource(R.string.habits_archived_hint))
             }
         }
     }
 
     if (creating) {
         NameEmojiDialog(
-            title = "新建习惯",
-            label = "习惯名称",
+            title = stringResource(R.string.habit_create),
+            label = stringResource(R.string.habit_name_label),
             emojiOptions = habitEmojis,
-            confirmText = "创建",
+            confirmText = stringResource(R.string.action_create),
             onDismiss = { creating = false },
             onConfirm = { name, emoji ->
                 viewModel.create(name, emoji)
@@ -105,14 +114,14 @@ fun HabitsScreen(
 
     editing?.let { habit ->
         NameEmojiDialog(
-            title = "编辑习惯",
-            label = "习惯名称",
+            title = stringResource(R.string.habit_edit),
+            label = stringResource(R.string.habit_name_label),
             emojiOptions = habitEmojis,
             initialName = habit.name,
             initialEmoji = habit.emoji,
             // 归档, not 删除: stopping a habit shouldn't cost you its history. Permanent deletion
             // is only reachable from the archive screen.
-            destructiveText = "归档",
+            destructiveText = stringResource(R.string.action_archive),
             onDestructive = {
                 editing = null
                 archiving = habit
@@ -127,9 +136,9 @@ fun HabitsScreen(
 
     archiving?.let { habit ->
         ConfirmDialog(
-            title = "归档「${habit.name}」?",
-            message = "它会从今天的清单里移走,但打卡记录都留着 —— 以后想继续,在「已归档」里恢复就行。",
-            confirmText = "归档",
+            title = stringResource(R.string.habit_archive_title, habit.name),
+            message = stringResource(R.string.habit_archive_message),
+            confirmText = stringResource(R.string.action_archive),
             onDismiss = { archiving = null },
             onConfirm = {
                 viewModel.archive(habit.id)
@@ -147,12 +156,14 @@ private fun WeekdayHeader() {
         horizontalArrangement = Arrangement.End,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-            weekdayLabels.forEach { label ->
+            stringArrayResource(R.array.weekday_initials).forEach { label ->
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                     textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    softWrap = false,
                     modifier = Modifier.width(8.dp),
                 )
             }

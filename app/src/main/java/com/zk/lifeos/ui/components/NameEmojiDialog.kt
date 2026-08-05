@@ -17,8 +17,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.zk.lifeos.R
 
 /** Emoji options offered when creating a project. Picking one is optional. */
 val projectEmojis = listOf("💼", "📚", "🏋", "🎥", "✍", "💰", "🏠", "🎯", "🧑‍💻", "🌱")
@@ -40,7 +42,7 @@ fun NameEmojiDialog(
     emojiOptions: List<String>,
     initialName: String = "",
     initialEmoji: String = "",
-    confirmText: String = "保存",
+    confirmText: String = stringResource(R.string.action_save),
     /** Optional third action when editing — 「删除」for habits, 「归档」for projects. */
     destructiveText: String? = null,
     onDestructive: (() -> Unit)? = null,
@@ -66,7 +68,7 @@ fun NameEmojiDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text(
-                    text = "图标(可选)",
+                    text = stringResource(R.string.label_icon_optional),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -97,7 +99,7 @@ fun NameEmojiDialog(
                     Text(destructiveText, color = MaterialTheme.colorScheme.error)
                 }
             } else {
-                TextButton(onClick = onDismiss) { Text("取消") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
             }
         },
     )
@@ -108,7 +110,7 @@ fun NameEmojiDialog(
 fun ConfirmDialog(
     title: String,
     message: String,
-    confirmText: String = "删除",
+    confirmText: String = stringResource(R.string.action_delete),
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -121,6 +123,6 @@ fun ConfirmDialog(
                 Text(confirmText, color = MaterialTheme.colorScheme.error)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }

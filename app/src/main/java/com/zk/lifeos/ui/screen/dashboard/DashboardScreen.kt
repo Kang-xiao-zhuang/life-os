@@ -19,10 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.R
 import com.zk.lifeos.model.DashboardSnapshot
 import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
@@ -34,9 +36,11 @@ import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.components.TaskEditSheet
 import com.zk.lifeos.ui.components.TaskRow
+import com.zk.lifeos.ui.components.itemCount
+import com.zk.lifeos.ui.currentLocale
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.TextStyle
-import java.util.Locale
 
 /** Which editor the screen currently has open. */
 private sealed interface Editor {
@@ -66,11 +70,13 @@ fun DashboardScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    // Snackbar text is built outside composition, so it goes through the (localized) context.
+    val context = LocalContext.current
     val offerUndo: (List<RescheduledTask>) -> Unit = { moved ->
         scope.launch {
             val result = snackbarHostState.showSnackbar(
-                message = "已把 ${moved.size} 项挪到今天",
-                actionLabel = "撤销",
+                message = context.getString(R.string.dash_moved_to_today, moved.size),
+                actionLabel = context.getString(R.string.action_undo),
                 duration = SnackbarDuration.Long,
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.undoReschedule(moved)
@@ -84,10 +90,10 @@ fun DashboardScreen(
         actions = {
             // Settings deliberately lives here rather than in the bottom bar.
             IconButton(onClick = onOpenSettings) {
-                Icon(Icons.Outlined.Settings, contentDescription = "设置")
+                Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.nav_settings))
             }
         },
-        floatingActionButton = { LifeOsFab("新任务") { editor = Editor.New } },
+        floatingActionButton = { LifeOsFab(stringResource(R.string.dash_new_task)) { editor = Editor.New } },
     ) {
         DateHeader(state.today)
 
@@ -109,21 +115,25 @@ fun DashboardScreen(
         )
 
         SectionCard(
-            title = "快速记录",
-            trailing = if (state.inboxCount > 0) "${state.inboxCount} 条待整理" else null,
+            title = stringResource(R.string.dash_capture_title),
+            trailing = if (state.inboxCount > 0) {
+                stringResource(R.string.dash_capture_trailing, state.inboxCount)
+            } else {
+                null
+            },
             onClick = onOpenCapture,
         ) {
-            EmptyHint("想到什么先记下来,以后再整理。")
+            EmptyHint(stringResource(R.string.dash_capture_hint))
         }
 
         SectionCard(
-            title = "今日复盘",
-            trailing = if (state.journal.isEmpty) "未写" else "已写",
+            title = stringResource(R.string.dash_journal_title),
+            trailing = if (state.journal.isEmpty) stringResource(R.string.journal_not_written) else stringResource(R.string.journal_written),
             onClick = onOpenJournal,
         ) {
             EmptyHint(
                 if (state.journal.isEmpty) {
-                    "今天完成了什么、最大的收获、遇到的问题、明天最重要的一件事。"
+                    stringResource(R.string.dash_journal_prompt_summary)
                 } else {
                     state.journal.win.ifBlank { state.journal.done }.take(60)
                 }
@@ -162,15 +172,17 @@ fun DashboardScreen(
 
 @Composable
 private fun DateHeader(today: LocalDate) {
-    val weekday = today.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.CHINA)
+    // currentLocale(), not Locale.getDefault(): the latter is the *system* language and would
+    // keep printing 星期一 after the user switched the app to English.
+    val weekday = today.dayOfWeek.getDisplayName(TextStyle.FULL, currentLocale())
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            text = "今天",
+            text = stringResource(R.string.label_today),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = "${today.monthValue} 月 ${today.dayOfMonth} 日 · $weekday",
+            text = stringResource(R.string.dash_date_line, today.monthValue, today.dayOfMonth, weekday),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -186,16 +198,16 @@ private fun MitCard(
 ) {
     val open = state.mit.count { !it.done }
     SectionCard(
-        title = "今日最重要",
+        title = stringResource(R.string.task_mit),
         // Counts what is still to do; finished ones stay listed but shouldn't inflate the number.
         trailing = when {
             state.mit.isEmpty() -> null
-            open == 0 -> "都做完了"
-            else -> "$open 项"
+            open == 0 -> stringResource(R.string.dash_all_done)
+            else -> itemCount(open)
         },
     ) {
         if (state.mit.isEmpty()) {
-            EmptyHint("还没有标记最重要的事。新建任务时勾上「今日最重要」,一天挑一到两件就够。")
+            EmptyHint(stringResource(R.string.dash_mit_empty))
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 state.mit.forEach { task ->
@@ -221,19 +233,19 @@ private fun TodayTasksCard(
     val overdue = state.dueToday.count { it.isOverdue(state.today) }
     val open = state.dueToday.count { !it.done }
     SectionCard(
-        title = "今日任务",
+        title = stringResource(R.string.dash_tasks_title),
         trailing = when {
             state.dueToday.isEmpty() -> null
-            overdue > 0 -> "$open 项 · 逾期 $overdue"
-            open == 0 -> "都做完了"
-            else -> "$open 项"
+            overdue > 0 -> stringResource(R.string.dash_tasks_trailing_overdue, open, overdue)
+            open == 0 -> stringResource(R.string.dash_all_done)
+            else -> itemCount(open)
         },
     ) {
         if (state.dueToday.isEmpty()) {
             // MIT tasks are filtered out of this list, so "nothing due" would be a lie when the
             // only thing due today is already featured above.
             EmptyHint(
-                if (state.mit.isEmpty()) "今天没有到期的任务。" else "今天到期的都在上面了。"
+                if (state.mit.isEmpty()) stringResource(R.string.dash_tasks_empty) else stringResource(R.string.dash_tasks_empty_all_mit)
             )
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -248,7 +260,7 @@ private fun TodayTasksCard(
                 // Overdue items otherwise just accumulate in red until the card becomes noise.
                 if (overdue > 0) {
                     TextButton(onClick = onRescheduleOverdue) {
-                        Text("把 $overdue 项逾期挪到今天")
+                        Text(stringResource(R.string.dash_reschedule_overdue, overdue))
                     }
                 }
             }
@@ -263,19 +275,19 @@ private fun HabitsCard(
     onToggleHabit: (Long) -> Unit,
 ) {
     SectionCard(
-        title = "今日习惯",
+        title = stringResource(R.string.dash_habits_title),
         trailing = if (state.habits.isEmpty()) null else "${state.habitsCheckedToday} / ${state.habits.size}",
         onClick = onOpenHabits,
     ) {
         if (state.habits.isEmpty()) {
-            EmptyHint("还没有习惯。阅读、健身、写作、英语…去习惯页加一个。")
+            EmptyHint(stringResource(R.string.dash_habits_empty))
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 state.habits.take(4).forEach { habit ->
                     HabitRow(habit = habit, onToggle = { onToggleHabit(habit.id) })
                 }
                 if (state.habits.size > 4) {
-                    EmptyHint("还有 ${state.habits.size - 4} 个,点开查看全部。")
+                    EmptyHint(stringResource(R.string.dash_habits_more, state.habits.size - 4))
                 }
             }
         }

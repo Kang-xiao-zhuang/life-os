@@ -25,10 +25,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.R
 import com.zk.lifeos.model.ProjectSummary
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.ConfirmDialog
@@ -38,6 +40,8 @@ import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.NameEmojiDialog
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.components.TaskRow
+import com.zk.lifeos.ui.components.itemCount
+import com.zk.lifeos.ui.components.pieceCount
 import com.zk.lifeos.ui.components.projectEmojis
 import java.time.LocalDate
 
@@ -66,25 +70,25 @@ fun ProjectsScreen(
     var archiving by remember { mutableStateOf<ProjectSummary?>(null) }
 
     LifeOsScreen(
-        title = "项目",
+        title = stringResource(R.string.projects_title),
         modifier = modifier,
-        floatingActionButton = { LifeOsFab("新项目") { creating = true } },
+        floatingActionButton = { LifeOsFab(stringResource(R.string.project_new)) { creating = true } },
     ) {
         // First, because「我现在能做什么」is the question you bring to this tab. Without it a task
         // with no due date and no MIT flag is only findable by opening its project.
         if (openTaskCount > 0) {
             SectionCard(
-                title = "所有待办",
-                trailing = "$openTaskCount 项",
+                title = stringResource(R.string.projects_all_tasks),
+                trailing = itemCount(openTaskCount),
                 onClick = onOpenAllTasks,
             ) {
-                EmptyHint("不分项目,按时间先后排好的一整张清单。")
+                EmptyHint(stringResource(R.string.projects_all_tasks_hint))
             }
         }
 
         if (projects.isEmpty()) {
-            SectionCard(title = "还没有项目") {
-                EmptyHint("项目是长期在做的事:工作、学习、阅读、健身、自媒体。每个项目下面挂任务。")
+            SectionCard(title = stringResource(R.string.projects_empty_title)) {
+                EmptyHint(stringResource(R.string.projects_empty_hint))
             }
         } else {
             projects.forEach { project ->
@@ -99,16 +103,19 @@ fun ProjectsScreen(
         // Last, because it's a rare visit — but present, so archiving isn't a dead end.
         if (archivedCount > 0) {
             SectionCard(
-                title = "已归档",
-                trailing = "$archivedCount 个",
+                title = stringResource(R.string.archived_title),
+                trailing = pieceCount(archivedCount),
                 onClick = onOpenArchived,
             ) {
-                EmptyHint("归档的项目在这里,可以恢复。")
+                EmptyHint(stringResource(R.string.projects_archived_hint))
             }
         }
 
         if (unassigned.isNotEmpty()) {
-            SectionCard(title = "未归类", trailing = "${unassigned.size} 项") {
+            SectionCard(
+                title = stringResource(R.string.label_unassigned),
+                trailing = itemCount(unassigned.size),
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     unassigned.take(8).forEach { task ->
                         TaskRow(
@@ -118,7 +125,7 @@ fun ProjectsScreen(
                         )
                     }
                     if (unassigned.size > 8) {
-                        EmptyHint("还有 ${unassigned.size - 8} 项。")
+                        EmptyHint(stringResource(R.string.projects_more, unassigned.size - 8))
                     }
                 }
             }
@@ -127,10 +134,10 @@ fun ProjectsScreen(
 
     if (creating) {
         NameEmojiDialog(
-            title = "新建项目",
-            label = "项目名称",
+            title = stringResource(R.string.project_create),
+            label = stringResource(R.string.project_name_label),
             emojiOptions = projectEmojis,
-            confirmText = "创建",
+            confirmText = stringResource(R.string.action_create),
             onDismiss = { creating = false },
             onConfirm = { name, emoji ->
                 viewModel.createProject(name, emoji)
@@ -141,12 +148,12 @@ fun ProjectsScreen(
 
     editing?.let { project ->
         NameEmojiDialog(
-            title = "编辑项目",
-            label = "项目名称",
+            title = stringResource(R.string.project_edit),
+            label = stringResource(R.string.project_name_label),
             emojiOptions = projectEmojis,
             initialName = project.name,
             initialEmoji = project.emoji,
-            destructiveText = "归档",
+            destructiveText = stringResource(R.string.action_archive),
             onDestructive = {
                 editing = null
                 archiving = project
@@ -161,9 +168,9 @@ fun ProjectsScreen(
 
     archiving?.let { project ->
         ConfirmDialog(
-            title = "归档「${project.name}」?",
-            message = "它会从列表里移走,但任务和历史都还在 —— 不会删掉任何东西。",
-            confirmText = "归档",
+            title = stringResource(R.string.project_archive_title, project.name),
+            message = stringResource(R.string.project_archive_message),
+            confirmText = stringResource(R.string.action_archive),
             onDismiss = { archiving = null },
             onConfirm = {
                 viewModel.archiveProject(project.id)
@@ -200,7 +207,11 @@ private fun ProjectCard(
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = if (project.totalTasks == 0) "暂无任务" else "${project.openTasks} 待做",
+                    text = if (project.totalTasks == 0) {
+                        stringResource(R.string.project_no_tasks)
+                    } else {
+                        stringResource(R.string.project_open_count, project.openTasks)
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -213,7 +224,7 @@ private fun ProjectCard(
 
             val progress = project.progress
             if (progress == null) {
-                EmptyHint("还没有任务。")
+                EmptyHint(stringResource(R.string.project_no_tasks_yet))
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     LinearProgressIndicator(
@@ -227,7 +238,7 @@ private fun ProjectCard(
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "已完成 ${project.doneTasks} / ${project.totalTasks}",
+                            text = stringResource(R.string.project_done_of, project.doneTasks, project.totalTasks),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,

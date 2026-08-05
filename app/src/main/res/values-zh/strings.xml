@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 中文文案。默认(英文)在 values/strings.xml。 -->
+<resources>
+
+    <!-- ===== 底部导航 ===== -->
+    <string name="nav_dashboard">首页</string>
+    <string name="nav_projects">项目</string>
+    <string name="nav_capture">记录</string>
+    <string name="nav_habits">习惯</string>
+    <string name="nav_journal">复盘</string>
+    <string name="nav_settings">设置</string>
+
+    <!-- ===== 桌面小组件 / 快捷方式 ===== -->
+    <string name="widget_capture_label">记一笔</string>
+    <string name="widget_capture_description">一步记下想到的任何东西</string>
+    <string name="shortcut_capture_long_label">快速记录一笔</string>
+
+    <!-- ===== 通用 ===== -->
+    <string name="action_cancel">取消</string>
+    <string name="action_save">保存</string>
+    <string name="action_delete">删除</string>
+    <string name="action_create">创建</string>
+    <string name="action_ok">确定</string>
+    <string name="action_back">返回</string>
+    <string name="action_restore">恢复</string>
+    <string name="action_delete_forever">彻底删除</string>
+    <string name="action_archive">归档</string>
+    <string name="action_clear">清除</string>
+    <string name="action_undo">撤销</string>
+    <string name="label_today">今天</string>
+    <string name="label_tomorrow">明天</string>
+    <string name="label_yesterday">昨天</string>
+    <string name="label_unassigned">未归类</string>
+    <string name="label_icon_optional">图标(可选)</string>
+    <string name="date_short">%1$d/%2$d</string>
+
+    <!-- ===== 计数 ===== -->
+    <plurals name="count_items">
+        <item quantity="other">%1$d 项</item>
+    </plurals>
+    <plurals name="count_tasks">
+        <item quantity="other">%1$d 个任务</item>
+    </plurals>
+    <plurals name="count_checkins">
+        <item quantity="other">%1$d 次打卡</item>
+    </plurals>
+    <plurals name="count_entries">
+        <item quantity="other">%1$d 篇</item>
+    </plurals>
+    <plurals name="count_notes">
+        <item quantity="other">%1$d 条</item>
+    </plurals>
+    <plurals name="count_pieces">
+        <item quantity="other">%1$d 个</item>
+    </plurals>
+    <plurals name="count_days_ago">
+        <item quantity="other">%1$d 天前</item>
+    </plurals>
+
+    <string-array name="weekday_initials">
+        <item>一</item>
+        <item>二</item>
+        <item>三</item>
+        <item>四</item>
+        <item>五</item>
+        <item>六</item>
+        <item>日</item>
+    </string-array>
+
+    <!-- ===== 首页 ===== -->
+    <string name="dash_today">今天</string>
+    <!-- 1 = 月, 2 = 日, 3 = 星期 -->
+    <string name="dash_date_line">%1$d 月 %2$d 日 · %3$s</string>
+    <string name="dash_new_task">新任务</string>
+    <string name="dash_mit_title">今日最重要</string>
+    <string name="dash_all_done">都做完了</string>
+    <string name="dash_mit_empty">还没有标记最重要的事。新建任务时勾上「今日最重要」,一天挑一到两件就够。</string>
+    <string name="dash_tasks_title">今日任务</string>
+    <string name="dash_tasks_trailing_overdue">%1$d 项 · 逾期 %2$d</string>
+    <string name="dash_tasks_empty">今天没有到期的任务。</string>
+    <string name="dash_tasks_empty_all_mit">今天到期的都在上面了。</string>
+    <string name="dash_reschedule_overdue">把 %1$d 项逾期挪到今天</string>
+    <string name="dash_moved_to_today">已把 %1$d 项挪到今天</string>
+    <string name="dash_habits_title">今日习惯</string>
+    <string name="dash_habits_empty">还没有习惯。阅读、健身、写作、英语…去习惯页加一个。</string>
+    <string name="dash_habits_more">还有 %1$d 个,点开查看全部。</string>
+    <string name="dash_capture_title">快速记录</string>
+    <string name="dash_capture_trailing">%1$d 条待整理</string>
+    <string name="dash_capture_hint">想到什么先记下来,以后再整理。</string>
+    <string name="dash_journal_title">今日复盘</string>
+    <string name="dash_journal_prompt_summary">今天完成了什么、最大的收获、遇到的问题、明天最重要的一件事。</string>
+
+    <!-- ===== 任务 ===== -->
+    <string name="task_new">新建任务</string>
+    <string name="task_edit">编辑任务</string>
+    <string name="task_title_label">要做什么</string>
+    <string name="task_notes_label">备注(可选)</string>
+    <string name="task_due_date">截止日期</string>
+    <string name="task_pick_date">选择日期</string>
+    <string name="task_mit">今日最重要</string>
+    <string name="task_mit_warning">今天已经有 %1$d 件最重要的事了 —— 都最重要就等于没有重点。</string>
+    <string name="task_project">所属项目</string>
+    <string name="task_delete_title">删除这个任务?</string>
+    <string name="task_delete_message">「%1$s」会被永久删除。</string>
+    <string name="task_mark_done">标记为已完成</string>
+    <string name="task_mark_undone">标记为未完成</string>
+
+    <!-- ===== 项目 ===== -->
+    <string name="projects_title">项目</string>
+    <string name="project_new">新项目</string>
+    <string name="project_create">新建项目</string>
+    <string name="project_edit">编辑项目</string>
+    <string name="project_name_label">项目名称</string>
+    <string name="projects_empty_title">还没有项目</string>
+    <string name="projects_empty_hint">项目是长期在做的事:工作、学习、阅读、健身、自媒体。每个项目下面挂任务。</string>
+    <string name="projects_all_tasks">所有待办</string>
+    <string name="projects_all_tasks_hint">不分项目,按时间先后排好的一整张清单。</string>
+    <string name="projects_archived">已归档</string>
+    <string name="projects_archived_hint">归档的项目在这里,可以恢复。</string>
+    <string name="projects_more">还有 %1$d 项。</string>
+    <string name="project_no_tasks">暂无任务</string>
+    <string name="project_no_tasks_yet">还没有任务。</string>
+    <string name="project_open_count">%1$d 待做</string>
+    <string name="project_done_of">已完成 %1$d / %2$d</string>
+    <string name="project_archive_title">归档「%1$s」?</string>
+    <string name="project_archive_message">它会从列表里移走,但任务和历史都还在 —— 不会删掉任何东西。</string>
+    <string name="project_fallback_title">项目</string>
+    <string name="project_detail_todo">待做</string>
+    <string name="project_detail_done">已完成</string>
+    <string name="project_detail_empty">没有待做的任务了。</string>
+    <string name="project_detail_more_done">还有 %1$d 项已完成。</string>
+
+    <!-- ===== 已归档 ===== -->
+    <string name="archived_title">已归档</string>
+    <string name="archived_projects_empty_title">没有归档的项目</string>
+    <string name="archived_projects_empty_hint">在项目列表里长按一个项目可以归档它。归档后它会来到这里,任务和历史都还在。</string>
+    <string name="archived_projects_counts">待做 %1$d · 已完成 %2$d</string>
+    <string name="archived_projects_delete_note">彻底删除只会删掉项目本身,它的任务会变成「未归类」,不会跟着消失。</string>
+    <string name="archived_project_delete_title">彻底删除「%1$s」?</string>
+    <string name="archived_project_delete_message_empty">这个项目会被永久删除,无法恢复。</string>
+    <string name="archived_project_delete_message">这个项目会被永久删除,无法恢复。它的 %1$d 个任务会保留下来,变成「未归类」。</string>
+    <string name="archived_habits_empty_title">没有归档的习惯</string>
+    <string name="archived_habits_empty_hint">长按一个习惯可以归档它。归档后打卡记录都还在,以后想继续随时恢复。</string>
+    <string name="archived_habits_restore_note">恢复后它会重新回到今天的清单里,连续天数按原来的记录继续算。</string>
+    <string name="archived_habits_delete_note">彻底删除会把这个习惯的全部打卡记录一起删掉,没法撤销。</string>
+    <string name="archived_habit_delete_title">彻底删除「%1$s」?</string>
+    <string name="archived_habit_delete_message_empty">这个习惯会被永久删除,无法恢复。</string>
+    <string name="archived_habit_delete_message">这个习惯和它的 %1$d 次打卡记录会被永久删除,无法恢复。如果只是暂时不做了,留在归档里就好。</string>
+
+    <!-- ===== 习惯 ===== -->
+    <string name="habits_title">习惯</string>
+    <string name="habit_new">新习惯</string>
+    <string name="habit_create">新建习惯</string>
+    <string name="habit_edit">编辑习惯</string>
+    <string name="habit_name_label">习惯名称</string>
+    <string name="habits_empty_title">还没有习惯</string>
+    <string name="habits_empty_hint">每天坚持的小事:📚 阅读 · 🏋 健身 · ✍ 写作 · 🎥 内容创作 · 🇬🇧 英语学习。</string>
+    <string name="habits_today">今天</string>
+    <string name="habits_hint">点一下打卡,再点一下取消;长按可以编辑。</string>
+    <string name="habits_month">月度打卡</string>
+    <string name="habits_archived_hint">停下来的习惯在这里,打卡记录都留着,想继续随时恢复。</string>
+    <string name="habit_archive_title">归档「%1$s」?</string>
+    <string name="habit_archive_message">它会从今天的清单里移走,但打卡记录都留着 —— 以后想继续,在「已归档」里恢复就行。</string>
+    <string name="habit_streak">连续 %1$d 天</string>
+    <string name="habit_week_progress">本周 %1$d/7</string>
+    <string name="habit_progress">%1$d / %2$d</string>
+
+    <!-- ===== 热力图 ===== -->
+    <string name="heatmap_prev_month">上个月</string>
+    <string name="heatmap_next_month">下个月</string>
+    <!-- 1 = 月份名(中文不用), 2 = 年, 3 = 月 -->
+    <string name="heatmap_month">%2$d 年 %3$d 月</string>
+    <string name="heatmap_no_habits">还没有习惯,先加一个。</string>
+    <string name="heatmap_summary">打卡 %1$d 天 · 全勤 %2$d 天</string>
+
+    <!-- ===== 复盘 ===== -->
+    <string name="journal_title">复盘</string>
+    <string name="journal_today">今天</string>
+    <string name="journal_unsaved">未保存</string>
+    <string name="journal_written">已写</string>
+    <string name="journal_not_written">未写</string>
+    <string name="journal_q_done">今天完成了什么</string>
+    <string name="journal_q_win">今天最大的收获</string>
+    <string name="journal_q_problems">今天遇到的问题</string>
+    <string name="journal_q_tomorrow">明天最重要的一件事</string>
+    <string name="journal_unsaved_hint">改动还没保存。</string>
+    <string name="journal_history">以前</string>
+    <string name="journal_history_hint">点一条可以看当天写的全部内容。</string>
+    <!-- 1 = 月份名(中文不用), 2 = 日, 3 = 年, 4 = 月 -->
+    <string name="journal_date_full">%3$d 年 %4$d 月 %2$d 日</string>
+
+    <!-- ===== 快速记录 ===== -->
+    <string name="capture_title">记录</string>
+    <string name="capture_card_title">记一笔</string>
+    <string name="capture_placeholder">一个待办、一个想法、一句话…</string>
+    <string name="capture_submit">记下来</string>
+    <string name="capture_clear">清空</string>
+    <string name="capture_inbox">待整理</string>
+    <string name="capture_inbox_empty">这里放你随手记下的东西 —— 记完之后再决定它是任务还是想法。</string>
+    <string name="capture_actions_hint">→ 变成任务(未归类);✕ 删掉。</string>
+    <string name="capture_to_task">变成任务</string>
+
+    <!-- ===== 所有待办 ===== -->
+    <string name="all_tasks_title">所有待办</string>
+    <string name="all_tasks_empty_title">没有待办了</string>
+    <string name="all_tasks_empty_hint">所有任务都完成了。</string>
+    <string name="all_tasks_overdue">已经逾期</string>
+    <string name="all_tasks_due_today">今天到期</string>
+    <string name="all_tasks_later">以后</string>
+    <string name="all_tasks_undated">没有日期</string>
+    <string name="all_tasks_move_these">把这 %1$d 项挪到今天</string>
+
+    <!-- ===== 设置 ===== -->
+    <string name="settings_title">设置</string>
+    <string name="settings_appearance">外观</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="settings_language">语言</string>
+    <string name="language_system">跟随系统</string>
+    <string name="settings_data">数据</string>
+    <string name="settings_data_hint">备份是一个 LifeOS_Backup.zip,里面有数据库、附件和设置。存到哪由你选,不联网。</string>
+    <string name="settings_export">导出</string>
+    <string name="settings_import">导入</string>
+    <string name="settings_last_backup">上次备份:%1$s</string>
+    <string name="settings_never_backed_up">还没有备份过。数据只存在这台设备上。</string>
+    <string name="settings_import_title">导入备份?</string>
+    <string name="settings_import_message">现在的项目、任务、习惯、打卡、记录和复盘,会被备份里的内容全部替换。如果当前数据还有用,先导出一份再继续。</string>
+    <string name="settings_choose_file">选择文件</string>
+    <string name="settings_home_screen">桌面</string>
+    <string name="settings_widget_hint">放一个「记一笔」小组件在桌面上,想到什么一步就能记下来。长按 App 图标也有同样的入口。</string>
+    <string name="settings_add_widget">添加到桌面</string>
+    <string name="settings_widget_unsupported">这个桌面不支持一键添加,请长按桌面空白处,从小组件列表里找 LifeOS。</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_about_text">LifeOS · 本地优先的个人工作台。数据只存在这台设备上,没有账号,不联网,零权限。</string>
+    <string name="settings_version">v%1$s</string>
+
+    <!-- ===== 备份结果 ===== -->
+    <string name="backup_exported">已导出:%1$s</string>
+    <string name="backup_restored">已恢复:%1$s</string>
+    <string name="backup_summary">%1$d 项目 · %2$d 任务 · %3$d 习惯 · %4$d 打卡 · %5$d 记录 · %6$d 复盘</string>
+    <string name="backup_error_cannot_write">无法写入所选位置。</string>
+    <string name="backup_error_cannot_read">无法读取所选文件。</string>
+    <string name="backup_error_not_a_backup">备份里没有 database.db,这可能不是 LifeOS 的备份文件。</string>
+    <string name="backup_error_schema_mismatch">备份的数据版本是 %1$d,当前 App 是 %2$d,先升级 App 再导入。</string>
+    <string name="backup_error_unexpected">出错了:%1$s</string>
+    <string name="backup_error_unknown">出错了。</string>
+</resources>

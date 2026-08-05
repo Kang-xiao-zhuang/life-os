@@ -18,10 +18,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.R
 import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.model.TaskListItem
@@ -31,6 +33,8 @@ import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.components.TaskEditSheet
 import com.zk.lifeos.ui.components.TaskRow
+import com.zk.lifeos.ui.components.itemCount
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 /**
@@ -56,11 +60,13 @@ fun AllTasksScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    // Resolved through LocalContext, not Locale.getDefault(), so the in-app language switch applies.
+    val context = LocalContext.current
     val offerUndo: (List<RescheduledTask>) -> Unit = { moved ->
         scope.launch {
             val result = snackbarHostState.showSnackbar(
-                message = "已把 ${moved.size} 项挪到今天",
-                actionLabel = "撤销",
+                message = context.getString(R.string.dash_moved_to_today, moved.size),
+                actionLabel = context.getString(R.string.action_undo),
                 duration = SnackbarDuration.Long,
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.undoReschedule(moved)
@@ -73,36 +79,36 @@ fun AllTasksScreen(
     val undated = tasks.filter { it.task.dueDate == null }
 
     LifeOsScreen(
-        title = "所有待办",
+        title = stringResource(R.string.projects_all_tasks),
         modifier = modifier,
         snackbarHostState = snackbarHostState,
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
             }
         },
     ) {
         if (tasks.isEmpty()) {
-            SectionCard(title = "没有待办了") {
-                EmptyHint("所有任务都完成了。")
+            SectionCard(title = stringResource(R.string.all_tasks_empty_title)) {
+                EmptyHint(stringResource(R.string.all_tasks_empty_hint))
             }
             return@LifeOsScreen
         }
 
         if (overdue.isNotEmpty()) {
-            SectionCard(title = "已经逾期", trailing = "${overdue.size} 项") {
+            SectionCard(title = stringResource(R.string.all_tasks_overdue), trailing = itemCount(overdue.size)) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     overdue.forEach { Row(it, today, viewModel) { editing = it.task } }
                     // Bulk escape hatch: a red backlog that only grows is a list you stop reading.
                     TextButton(onClick = { viewModel.rescheduleOverdue(offerUndo) }) {
-                        Text("把这 ${overdue.size} 项挪到今天")
+                        Text(stringResource(R.string.all_tasks_move_these, overdue.size))
                     }
                 }
             }
         }
 
         if (dueToday.isNotEmpty()) {
-            SectionCard(title = "今天到期", trailing = "${dueToday.size} 项") {
+            SectionCard(title = stringResource(R.string.all_tasks_due_today), trailing = itemCount(dueToday.size)) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     dueToday.forEach { Row(it, today, viewModel) { editing = it.task } }
                 }
@@ -110,7 +116,7 @@ fun AllTasksScreen(
         }
 
         if (later.isNotEmpty()) {
-            SectionCard(title = "以后", trailing = "${later.size} 项") {
+            SectionCard(title = stringResource(R.string.all_tasks_later), trailing = itemCount(later.size)) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     later.forEach { Row(it, today, viewModel) { editing = it.task } }
                 }
@@ -118,7 +124,7 @@ fun AllTasksScreen(
         }
 
         if (undated.isNotEmpty()) {
-            SectionCard(title = "没有日期", trailing = "${undated.size} 项") {
+            SectionCard(title = stringResource(R.string.all_tasks_undated), trailing = itemCount(undated.size)) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     undated.forEach { Row(it, today, viewModel) { editing = it.task } }
                 }
@@ -155,7 +161,7 @@ private fun Row(
     TaskRow(
         task = item.task,
         today = today,
-        projectLabel = item.projectLabel,
+        projectLabel = item.projectLabel ?: stringResource(R.string.label_unassigned),
         onToggle = { viewModel.toggleTask(item.task) },
         onClick = onEdit,
     )

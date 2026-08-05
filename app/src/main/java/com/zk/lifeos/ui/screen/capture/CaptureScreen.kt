@@ -26,14 +26,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.R
 import com.zk.lifeos.model.CaptureItem
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
+import com.zk.lifeos.ui.components.noteCount
 import java.time.LocalDate
 
 /**
@@ -60,13 +63,13 @@ fun CaptureScreen(
         }
     }
 
-    LifeOsScreen(title = "记录", modifier = modifier) {
-        SectionCard(title = "记一笔") {
+    LifeOsScreen(title = stringResource(R.string.capture_title), modifier = modifier) {
+        SectionCard(title = stringResource(R.string.capture_card_title)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it },
-                    placeholder = { Text("一个待办、一个想法、一句话…") },
+                    placeholder = { Text(stringResource(R.string.capture_placeholder)) },
                     minLines = 2,
                     maxLines = 5,
                     modifier = Modifier
@@ -81,10 +84,10 @@ fun CaptureScreen(
                             text = ""
                         },
                         enabled = text.isNotBlank(),
-                    ) { Text("记下来") }
+                    ) { Text(stringResource(R.string.capture_submit)) }
                     if (text.isNotBlank()) {
                         IconButton(onClick = { text = "" }) {
-                            Icon(Icons.Filled.Close, contentDescription = "清空")
+                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.capture_clear))
                         }
                     }
                 }
@@ -92,11 +95,11 @@ fun CaptureScreen(
         }
 
         SectionCard(
-            title = "待整理",
-            trailing = if (inbox.isEmpty()) null else "${inbox.size} 条",
+            title = stringResource(R.string.capture_inbox),
+            trailing = if (inbox.isEmpty()) null else noteCount(inbox.size),
         ) {
             if (inbox.isEmpty()) {
-                EmptyHint("这里放你随手记下的东西 —— 记完之后再决定它是任务还是想法。")
+                EmptyHint(stringResource(R.string.capture_inbox_empty))
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     inbox.forEach { item ->
@@ -106,7 +109,7 @@ fun CaptureScreen(
                             onDelete = { viewModel.delete(item.id) },
                         )
                     }
-                    EmptyHint("→ 变成任务(未归类);✕ 删掉。")
+                    EmptyHint(stringResource(R.string.capture_actions_hint))
                 }
             }
         }
@@ -139,7 +142,7 @@ private fun CaptureRow(
         IconButton(onClick = onConvert) {
             Icon(
                 imageVector = Icons.Outlined.AddTask,
-                contentDescription = "变成任务",
+                contentDescription = stringResource(R.string.capture_to_task),
                 tint = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.size(20.dp),
             )
@@ -147,7 +150,7 @@ private fun CaptureRow(
         IconButton(onClick = onDelete) {
             Icon(
                 imageVector = Icons.Filled.Close,
-                contentDescription = "删除",
+                contentDescription = stringResource(R.string.action_delete),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(18.dp),
             )
@@ -156,11 +159,12 @@ private fun CaptureRow(
 }
 
 /** Time for today's items, date for older ones — the useful half of the timestamp. */
+@Composable
 private fun timeLabel(item: CaptureItem): String {
     val date = item.createdAt.toLocalDate()
     return if (date == LocalDate.now()) {
         "%02d:%02d".format(item.createdAt.hour, item.createdAt.minute)
     } else {
-        "${date.monthValue}/${date.dayOfMonth}"
+        stringResource(R.string.date_short, date.monthValue, date.dayOfMonth)
     }
 }

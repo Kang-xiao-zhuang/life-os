@@ -27,7 +27,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.zk.lifeos.R
 import com.zk.lifeos.model.ProjectSummary
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.service.TaskService
@@ -81,21 +83,21 @@ fun TaskEditSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = if (existing == null) "新建任务" else "编辑任务",
+                text = if (existing == null) stringResource(R.string.task_new) else stringResource(R.string.task_edit),
                 style = MaterialTheme.typography.titleMedium,
             )
 
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("要做什么") },
+                label = { Text(stringResource(R.string.task_title_label)) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("备注(可选)") },
+                label = { Text(stringResource(R.string.task_notes_label)) },
                 minLines = 2,
                 maxLines = 4,
                 modifier = Modifier.fillMaxWidth(),
@@ -104,7 +106,7 @@ fun TaskEditSheet(
             // ---- due date ----
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "截止日期",
+                    text = stringResource(R.string.task_due_date),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -114,15 +116,20 @@ fun TaskEditSheet(
                 ) {
                     AssistChip(
                         onClick = { showDatePicker = true },
-                        label = { Text(dueDate?.let { "${it.monthValue}/${it.dayOfMonth}" } ?: "选择日期") },
+                        label = {
+                            Text(
+                                dueDate?.let { stringResource(R.string.date_short, it.monthValue, it.dayOfMonth) }
+                                    ?: stringResource(R.string.task_pick_date)
+                            )
+                        },
                     )
-                    AssistChip(onClick = { dueDate = LocalDate.now() }, label = { Text("今天") })
+                    AssistChip(onClick = { dueDate = LocalDate.now() }, label = { Text(stringResource(R.string.label_today)) })
                     AssistChip(
                         onClick = { dueDate = LocalDate.now().plusDays(1) },
-                        label = { Text("明天") },
+                        label = { Text(stringResource(R.string.label_tomorrow)) },
                     )
                     if (dueDate != null) {
-                        TextButton(onClick = { dueDate = null }) { Text("清除") }
+                        TextButton(onClick = { dueDate = null }) { Text(stringResource(R.string.action_clear)) }
                     }
                 }
             }
@@ -135,11 +142,11 @@ fun TaskEditSheet(
                 FilterChip(
                     selected = isMit,
                     onClick = { isMit = !isMit },
-                    label = { Text("今日最重要") },
+                    label = { Text(stringResource(R.string.task_mit)) },
                 )
                 if (isMit && othersFlagged >= TaskService.MIT_SOFT_LIMIT) {
                     Text(
-                        text = "今天已经有 $othersFlagged 件最重要的事了 —— 都最重要就等于没有重点。",
+                        text = stringResource(R.string.task_mit_warning, othersFlagged),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -150,7 +157,7 @@ fun TaskEditSheet(
             if (projects.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = "所属项目",
+                        text = stringResource(R.string.task_project),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -161,7 +168,7 @@ fun TaskEditSheet(
                         FilterChip(
                             selected = projectId == null,
                             onClick = { projectId = null },
-                            label = { Text("未归类") },
+                            label = { Text(stringResource(R.string.label_unassigned)) },
                         )
                         projects.forEach { project ->
                             FilterChip(
@@ -189,13 +196,13 @@ fun TaskEditSheet(
                         onSave(TaskDraft(title, notes, projectId, dueDate, isMit))
                     },
                     enabled = title.isNotBlank(),
-                ) { Text("保存") }
+                ) { Text(stringResource(R.string.action_save)) }
 
-                TextButton(onClick = onDismiss) { Text("取消") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
 
                 if (onDelete != null) {
                     TextButton(onClick = { confirmDelete = true }) {
-                        Text("删除", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -218,10 +225,10 @@ fun TaskEditSheet(
                         dueDate = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
                     }
                     showDatePicker = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.action_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("取消") }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         ) {
             DatePicker(state = state)
@@ -230,8 +237,8 @@ fun TaskEditSheet(
 
     if (confirmDelete && onDelete != null) {
         ConfirmDialog(
-            title = "删除这个任务?",
-            message = "「${existing?.title.orEmpty()}」会被永久删除。",
+            title = stringResource(R.string.task_delete_title),
+            message = stringResource(R.string.task_delete_message, existing?.title.orEmpty()),
             onDismiss = { confirmDelete = false },
             onConfirm = {
                 confirmDelete = false

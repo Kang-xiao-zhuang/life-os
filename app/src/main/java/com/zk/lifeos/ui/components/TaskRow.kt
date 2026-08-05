@@ -18,6 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.zk.lifeos.R
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,7 +52,7 @@ fun TaskRow(
     ) {
         Icon(
             imageVector = if (task.done) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
-            contentDescription = if (task.done) "标记为未完成" else "标记为已完成",
+            contentDescription = if (task.done) stringResource(R.string.task_mark_undone) else stringResource(R.string.task_mark_done),
             tint = if (task.done) scheme.secondary else scheme.outline,
             modifier = Modifier
                 .clip(CircleShape)
@@ -96,10 +98,11 @@ fun TaskRow(
     }
 }
 
-/** Relative where it helps ("今天"/"昨天"), absolute where it doesn't. */
+/** Relative where it helps (today / yesterday / tomorrow), absolute where it doesn't. */
+@Composable
 private fun dueLabel(due: LocalDate, today: LocalDate): String = when (due) {
-    today -> "今天"
-    today.minusDays(1) -> "昨天"
-    today.plusDays(1) -> "明天"
-    else -> "${due.monthValue}/${due.dayOfMonth}"
+    today -> stringResource(R.string.label_today)
+    today.minusDays(1) -> stringResource(R.string.label_yesterday)
+    today.plusDays(1) -> stringResource(R.string.label_tomorrow)
+    else -> stringResource(R.string.date_short, due.monthValue, due.dayOfMonth)
 }

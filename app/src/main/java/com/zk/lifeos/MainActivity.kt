@@ -9,14 +9,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zk.lifeos.model.AppLanguage
 import com.zk.lifeos.model.ThemeMode
 import com.zk.lifeos.ui.LifeOsApp
+import com.zk.lifeos.ui.LifeOsLocalization
 import com.zk.lifeos.ui.theme.LifeOsTheme
 
 /**
- * The single activity. It reads the persisted theme mode directly from the settings service so
- * the whole tree can be themed before any screen composes — a screen-level ViewModel would be
- * too late and would flash the wrong colours.
+ * The single activity. It reads the persisted theme and language directly from the settings
+ * service so the whole tree is themed and translated before any screen composes — a screen-level
+ * ViewModel would be too late and would flash the wrong colours or the wrong language.
  */
 class MainActivity : ComponentActivity() {
 
@@ -34,13 +36,17 @@ class MainActivity : ComponentActivity() {
         val settingsService = (application as LifeOsApplication).container.settingsService
 
         setContent {
-            // Start from the product default so the very first frame is already the right
-            // colour — DataStore's first emission arrives a moment later.
+            // Start from the product defaults so the very first frame is already right —
+            // DataStore's first emission arrives a moment later.
             val themeMode by settingsService.themeMode
                 .collectAsStateWithLifecycle(initialValue = ThemeMode.DEFAULT)
+            val language by settingsService.language
+                .collectAsStateWithLifecycle(initialValue = AppLanguage.DEFAULT)
 
-            LifeOsTheme(themeMode = themeMode) {
-                LifeOsApp(captureRequest = captureRequest)
+            LifeOsLocalization(language = language) {
+                LifeOsTheme(themeMode = themeMode) {
+                    LifeOsApp(captureRequest = captureRequest)
+                }
             }
         }
     }

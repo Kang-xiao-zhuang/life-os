@@ -13,10 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.zk.lifeos.R
 import com.zk.lifeos.model.JournalEntry
+import com.zk.lifeos.ui.currentLocale
 import java.time.format.TextStyle
-import java.util.Locale
 
 /**
  * Reads back one past review in full.
@@ -32,7 +34,9 @@ fun JournalEntrySheet(
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val weekday = entry.date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.CHINA)
+    val locale = currentLocale()
+    val weekday = entry.date.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+    val monthName = entry.date.month.getDisplayName(TextStyle.FULL, locale)
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -45,7 +49,13 @@ fun JournalEntrySheet(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = "${entry.date.year} 年 ${entry.date.monthValue} 月 ${entry.date.dayOfMonth} 日",
+                    text = stringResource(
+                        R.string.journal_date_full,
+                        monthName,
+                        entry.date.dayOfMonth,
+                        entry.date.year,
+                        entry.date.monthValue,
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
@@ -56,10 +66,10 @@ fun JournalEntrySheet(
                 )
             }
 
-            Field("今天完成了什么", entry.done)
-            Field("今天最大的收获", entry.win)
-            Field("今天遇到的问题", entry.problems)
-            Field("明天最重要的一件事", entry.tomorrowMit)
+            Field(stringResource(R.string.journal_q_done), entry.done)
+            Field(stringResource(R.string.journal_q_win), entry.win)
+            Field(stringResource(R.string.journal_q_problems), entry.problems)
+            Field(stringResource(R.string.journal_q_tomorrow), entry.tomorrowMit)
         }
     }
 }

@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.room.withTransaction
 import com.zk.lifeos.data.db.LifeOsDatabase
 import com.zk.lifeos.model.BackupCounts
+import com.zk.lifeos.model.BackupException
+import com.zk.lifeos.model.BackupFailure
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -43,7 +45,7 @@ class BackupStore(
         val dbFile = context.getDatabasePath(LifeOsDatabase.NAME)
 
         val output = context.contentResolver.openOutputStream(target)
-            ?: error("无法写入所选位置")
+            ?: throw BackupException(BackupFailure.CannotWrite)
 
         output.use { raw ->
             ZipOutputStream(raw.buffered()).use { zip ->
@@ -88,7 +90,7 @@ class BackupStore(
             var config: JSONObject? = null
 
             val input = context.contentResolver.openInputStream(source)
-                ?: error("无法读取所选文件")
+                ?: throw BackupException(BackupFailure.CannotRead)
             input.use { raw ->
                 ZipInputStream(raw.buffered()).use { zip ->
                     var entry: ZipEntry? = zip.nextEntry
@@ -118,14 +120,16 @@ class BackupStore(
                 }
             }
 
-            if (!extractedDb.isFile) error("备份里没有 $ENTRY_DB,这可能不是 LifeOS 的备份文件")
+            if (!extractedDb.isFile) throw BackupException(BackupFailure.NotABackup)
 
             config?.let { json ->
                 val version = json.optInt(KEY_SCHEMA_VERSION, -1)
                 if (version != -1 && version != LifeOsDatabase.SCHEMA_VERSION) {
-                    error(
-                        "备份的数据版本是 $version,当前 App 是 ${LifeOsDatabase.SCHEMA_VERSION}," +
-                            "先升级 App 再导入"
+                    throw BackupException(
+                        BackupFailure.SchemaMismatch(
+                            backupVersion = version,
+                            appVersion = LifeOsDatabase.SCHEMA_VERSION,
+                        )
                     )
                 }
             }

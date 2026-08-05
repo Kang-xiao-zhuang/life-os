@@ -1,17 +1,267 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default (English) strings. Chinese lives in values-zh/.
+
+  English is the default so any unmatched locale still gets a readable app; the in-app language
+  switch (Settings → Language) pins either one regardless of the phone's setting.
+-->
 <resources>
-    <string name="app_name">LifeOS</string>
+    <string name="app_name" translatable="false">LifeOS</string>
 
-    <!-- 底部导航 -->
-    <string name="nav_dashboard">首页</string>
-    <string name="nav_projects">项目</string>
-    <string name="nav_capture">记录</string>
-    <string name="nav_habits">习惯</string>
-    <string name="nav_journal">复盘</string>
-    <string name="nav_settings">设置</string>
+    <!-- ===== bottom navigation ===== -->
+    <string name="nav_dashboard">Today</string>
+    <string name="nav_projects">Projects</string>
+    <string name="nav_capture">Capture</string>
+    <string name="nav_habits">Habits</string>
+    <string name="nav_journal">Review</string>
+    <string name="nav_settings">Settings</string>
 
-    <!-- 桌面快捷记录 -->
-    <string name="widget_capture_label">记一笔</string>
-    <string name="widget_capture_description">一步记下想到的任何东西</string>
-    <string name="shortcut_capture_long_label">快速记录一笔</string>
+    <!-- ===== home-screen widget / shortcut ===== -->
+    <string name="widget_capture_label">Quick note</string>
+    <string name="widget_capture_description">Note anything down in one step</string>
+    <string name="shortcut_capture_long_label">Write a quick note</string>
+
+    <!-- ===== shared actions and labels ===== -->
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_create">Create</string>
+    <string name="action_ok">OK</string>
+    <string name="action_back">Back</string>
+    <string name="action_restore">Restore</string>
+    <string name="action_delete_forever">Delete permanently</string>
+    <string name="action_archive">Archive</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_undo">Undo</string>
+    <string name="label_today">Today</string>
+    <string name="label_tomorrow">Tomorrow</string>
+    <string name="label_yesterday">Yesterday</string>
+    <string name="label_unassigned">No project</string>
+    <string name="label_icon_optional">Icon (optional)</string>
+    <string name="date_short">%1$d/%2$d</string>
+
+    <!-- ===== counters ===== -->
+    <plurals name="count_items">
+        <item quantity="one">%1$d item</item>
+        <item quantity="other">%1$d items</item>
+    </plurals>
+    <plurals name="count_tasks">
+        <item quantity="one">%1$d task</item>
+        <item quantity="other">%1$d tasks</item>
+    </plurals>
+    <plurals name="count_checkins">
+        <item quantity="one">%1$d check-in</item>
+        <item quantity="other">%1$d check-ins</item>
+    </plurals>
+    <plurals name="count_entries">
+        <item quantity="one">%1$d entry</item>
+        <item quantity="other">%1$d entries</item>
+    </plurals>
+    <plurals name="count_notes">
+        <item quantity="one">%1$d note</item>
+        <item quantity="other">%1$d notes</item>
+    </plurals>
+    <plurals name="count_pieces">
+        <item quantity="one">%1$d</item>
+        <item quantity="other">%1$d</item>
+    </plurals>
+    <plurals name="count_days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
+
+    <!--
+      Single letters, not Mon/Tue: these label a strip of 8dp dots, so anything wider than one
+      glyph either wraps or stops lining up with the column it names.
+    -->
+    <string-array name="weekday_initials">
+        <item>M</item>
+        <item>T</item>
+        <item>W</item>
+        <item>T</item>
+        <item>F</item>
+        <item>S</item>
+        <item>S</item>
+    </string-array>
+
+    <!-- ===== dashboard ===== -->
+    <string name="dash_today">Today</string>
+    <!-- 1 = month number, 2 = day, 3 = weekday name -->
+    <string name="dash_date_line">%1$d/%2$d · %3$s</string>
+    <string name="dash_new_task">New task</string>
+    <string name="dash_mit_title">Most important today</string>
+    <string name="dash_all_done">All done</string>
+    <string name="dash_mit_empty">Nothing flagged yet. Tick “Most important today” when creating a task — one or two a day is plenty.</string>
+    <string name="dash_tasks_title">Due today</string>
+    <string name="dash_tasks_trailing_overdue">%1$d left · %2$d overdue</string>
+    <string name="dash_tasks_empty">Nothing due today.</string>
+    <string name="dash_tasks_empty_all_mit">Everything due today is already above.</string>
+    <string name="dash_reschedule_overdue">Move %1$d overdue to today</string>
+    <string name="dash_moved_to_today">Moved %1$d to today</string>
+    <string name="dash_habits_title">Habits today</string>
+    <string name="dash_habits_empty">No habits yet. Reading, exercise, writing, languages… add one on the Habits tab.</string>
+    <string name="dash_habits_more">%1$d more — tap to see all.</string>
+    <string name="dash_capture_title">Quick capture</string>
+    <string name="dash_capture_trailing">%1$d to sort</string>
+    <string name="dash_capture_hint">Note things down as they come; sort them out later.</string>
+    <string name="dash_journal_title">Today\'s review</string>
+    <string name="dash_journal_prompt_summary">What you finished, the biggest win, what got in the way, and the one thing that matters tomorrow.</string>
+
+    <!-- ===== tasks ===== -->
+    <string name="task_new">New task</string>
+    <string name="task_edit">Edit task</string>
+    <string name="task_title_label">What needs doing</string>
+    <string name="task_notes_label">Notes (optional)</string>
+    <string name="task_due_date">Due date</string>
+    <string name="task_pick_date">Pick a date</string>
+    <string name="task_mit">Most important today</string>
+    <string name="task_mit_warning">There are already %1$d most-important things today — if everything is most important, nothing is.</string>
+    <string name="task_project">Project</string>
+    <string name="task_delete_title">Delete this task?</string>
+    <string name="task_delete_message">“%1$s” will be permanently deleted.</string>
+    <string name="task_mark_done">Mark as done</string>
+    <string name="task_mark_undone">Mark as not done</string>
+
+    <!-- ===== projects ===== -->
+    <string name="projects_title">Projects</string>
+    <string name="project_new">New project</string>
+    <string name="project_create">New project</string>
+    <string name="project_edit">Edit project</string>
+    <string name="project_name_label">Project name</string>
+    <string name="projects_empty_title">No projects yet</string>
+    <string name="projects_empty_hint">Projects are the long-running things: work, study, reading, training, making stuff. Tasks hang off them.</string>
+    <string name="projects_all_tasks">All to-dos</string>
+    <string name="projects_all_tasks_hint">One flat list across every project, ordered by when things are due.</string>
+    <string name="projects_archived">Archived</string>
+    <string name="projects_archived_hint">Archived projects live here and can be brought back.</string>
+    <string name="projects_more">%1$d more.</string>
+    <string name="project_no_tasks">No tasks</string>
+    <string name="project_no_tasks_yet">No tasks yet.</string>
+    <string name="project_open_count">%1$d to do</string>
+    <string name="project_done_of">Done %1$d / %2$d</string>
+    <string name="project_archive_title">Archive “%1$s”?</string>
+    <string name="project_archive_message">It leaves the list, but its tasks and history stay — nothing is deleted.</string>
+    <string name="project_fallback_title">Project</string>
+    <string name="project_detail_todo">To do</string>
+    <string name="project_detail_done">Done</string>
+    <string name="project_detail_empty">Nothing left to do.</string>
+    <string name="project_detail_more_done">%1$d more already done.</string>
+
+    <!-- ===== archive ===== -->
+    <string name="archived_title">Archived</string>
+    <string name="archived_projects_empty_title">Nothing archived</string>
+    <string name="archived_projects_empty_hint">Long-press a project in the list to archive it. It comes here, with its tasks and history intact.</string>
+    <string name="archived_projects_counts">To do %1$d · Done %2$d</string>
+    <string name="archived_projects_delete_note">Deleting permanently removes only the project itself — its tasks become “No project” rather than disappearing.</string>
+    <string name="archived_project_delete_title">Permanently delete “%1$s”?</string>
+    <string name="archived_project_delete_message_empty">This project will be gone for good.</string>
+    <string name="archived_project_delete_message">This project will be gone for good. Its %1$d tasks are kept and become “No project”.</string>
+    <string name="archived_habits_empty_title">Nothing archived</string>
+    <string name="archived_habits_empty_hint">Long-press a habit to archive it. Its check-ins stay, so you can pick it up again any time.</string>
+    <string name="archived_habits_restore_note">Restoring puts it back on today\'s list, and the streak continues from the records it already has.</string>
+    <string name="archived_habits_delete_note">Deleting permanently also removes every check-in this habit ever recorded. That can\'t be undone.</string>
+    <string name="archived_habit_delete_title">Permanently delete “%1$s”?</string>
+    <string name="archived_habit_delete_message_empty">This habit will be gone for good.</string>
+    <string name="archived_habit_delete_message">This habit and its %1$d check-ins will be gone for good. If you\'re only pausing, leaving it archived is enough.</string>
+
+    <!-- ===== habits ===== -->
+    <string name="habits_title">Habits</string>
+    <string name="habit_new">New habit</string>
+    <string name="habit_create">New habit</string>
+    <string name="habit_edit">Edit habit</string>
+    <string name="habit_name_label">Habit name</string>
+    <string name="habits_empty_title">No habits yet</string>
+    <string name="habits_empty_hint">The small daily things: 📚 reading · 🏋 training · ✍ writing · 🎥 making things · 🇬🇧 a language.</string>
+    <string name="habits_today">Today</string>
+    <string name="habits_hint">Tap to check in, tap again to undo; long-press to edit.</string>
+    <string name="habits_month">Monthly check-ins</string>
+    <string name="habits_archived_hint">Habits you\'ve paused live here with their records intact — restore one any time.</string>
+    <string name="habit_archive_title">Archive “%1$s”?</string>
+    <string name="habit_archive_message">It leaves today\'s list, but every check-in stays — restore it from Archived whenever you want it back.</string>
+    <string name="habit_streak">%1$d day streak</string>
+    <string name="habit_week_progress">%1$d/7 this week</string>
+    <string name="habit_progress">%1$d / %2$d</string>
+
+    <!-- ===== habit heatmap ===== -->
+    <string name="heatmap_prev_month">Previous month</string>
+    <string name="heatmap_next_month">Next month</string>
+    <!-- 1 = month name, 2 = year, 3 = month number -->
+    <string name="heatmap_month">%1$s %2$d</string>
+    <string name="heatmap_no_habits">No habits yet — add one.</string>
+    <string name="heatmap_summary">%1$d days checked · %2$d perfect</string>
+
+    <!-- ===== journal ===== -->
+    <string name="journal_title">Review</string>
+    <string name="journal_today">Today</string>
+    <string name="journal_unsaved">Unsaved</string>
+    <string name="journal_written">Written</string>
+    <string name="journal_not_written">Not yet</string>
+    <string name="journal_q_done">What I finished today</string>
+    <string name="journal_q_win">The biggest win today</string>
+    <string name="journal_q_problems">What got in the way</string>
+    <string name="journal_q_tomorrow">The one thing that matters tomorrow</string>
+    <string name="journal_unsaved_hint">Changes aren\'t saved yet.</string>
+    <string name="journal_history">Earlier</string>
+    <string name="journal_history_hint">Tap an entry to read the whole day.</string>
+    <!-- 1 = month name, 2 = day, 3 = year, 4 = month number -->
+    <string name="journal_date_full">%1$s %2$d, %3$d</string>
+
+    <!-- ===== capture ===== -->
+    <string name="capture_title">Capture</string>
+    <string name="capture_card_title">Note it down</string>
+    <string name="capture_placeholder">A to-do, an idea, a sentence…</string>
+    <string name="capture_submit">Note it</string>
+    <string name="capture_clear">Clear</string>
+    <string name="capture_inbox">To sort</string>
+    <string name="capture_inbox_empty">Whatever you jot down lands here — decide later whether it\'s a task or just a thought.</string>
+    <string name="capture_actions_hint">→ turns it into a task with no project; ✕ deletes it.</string>
+    <string name="capture_to_task">Turn into a task</string>
+
+    <!-- ===== all to-dos ===== -->
+    <string name="all_tasks_title">All to-dos</string>
+    <string name="all_tasks_empty_title">Nothing to do</string>
+    <string name="all_tasks_empty_hint">Every task is done.</string>
+    <string name="all_tasks_overdue">Overdue</string>
+    <string name="all_tasks_due_today">Due today</string>
+    <string name="all_tasks_later">Later</string>
+    <string name="all_tasks_undated">No date</string>
+    <string name="all_tasks_move_these">Move these %1$d to today</string>
+
+    <!-- ===== settings ===== -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="theme_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_language">Language</string>
+    <string name="language_system">Follow system</string>
+    <string name="language_chinese" translatable="false">中文</string>
+    <string name="language_english" translatable="false">English</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_data_hint">A backup is one LifeOS_Backup.zip holding the database, attachments and settings. You choose where it goes; nothing is uploaded.</string>
+    <string name="settings_export">Export</string>
+    <string name="settings_import">Import</string>
+    <string name="settings_last_backup">Last backup: %1$s</string>
+    <string name="settings_never_backed_up">Never backed up. Everything lives on this device only.</string>
+    <string name="settings_import_title">Import a backup?</string>
+    <string name="settings_import_message">Your current projects, tasks, habits, check-ins, notes and reviews will all be replaced by what\'s in the backup. If the current data still matters, export it first.</string>
+    <string name="settings_choose_file">Choose a file</string>
+    <string name="settings_home_screen">Home screen</string>
+    <string name="settings_widget_hint">Put a “Quick note” widget on the home screen so anything that comes to mind is one tap away. Long-pressing the app icon does the same.</string>
+    <string name="settings_add_widget">Add to home screen</string>
+    <string name="settings_widget_unsupported">This launcher can\'t add it for you — long-press an empty spot on the home screen and find LifeOS in the widget list.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_text">LifeOS · a local-first personal workbench. Your data stays on this device: no account, no network, no permissions.</string>
+    <string name="settings_version">v%1$s</string>
+
+    <!-- ===== backup results ===== -->
+    <string name="backup_exported">Exported: %1$s</string>
+    <string name="backup_restored">Restored: %1$s</string>
+    <string name="backup_summary">%1$d projects · %2$d tasks · %3$d habits · %4$d check-ins · %5$d notes · %6$d reviews</string>
+    <string name="backup_error_cannot_write">Couldn\'t write to the location you picked.</string>
+    <string name="backup_error_cannot_read">Couldn\'t read the file you picked.</string>
+    <string name="backup_error_not_a_backup">There\'s no database.db inside — this probably isn\'t a LifeOS backup.</string>
+    <string name="backup_error_schema_mismatch">The backup\'s data version is %1$d and this app is %2$d. Update the app before importing.</string>
+    <string name="backup_error_unexpected">Something went wrong: %1$s</string>
+    <string name="backup_error_unknown">Something went wrong.</string>
 </resources>

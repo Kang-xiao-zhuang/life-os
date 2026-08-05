@@ -3,6 +3,9 @@ package com.zk.lifeos.ui.screen.settings
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zk.lifeos.model.AppLanguage
+import com.zk.lifeos.model.BackupCounts
+import com.zk.lifeos.model.BackupFailure
 import com.zk.lifeos.model.BackupResult
 import com.zk.lifeos.model.ThemeMode
 import com.zk.lifeos.service.BackupService
@@ -13,9 +16,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Instant
 
-/** What the last export/import did, in words the user can read. */
-data class BackupStatus(val message: String, val isError: Boolean)
+/**
+ * What the last export/import did — as data, not as a sentence.
+ *
+ * A ViewModel has no access to string resources, so a pre-formatted message here would be frozen
+ * in whatever language was hard-coded. The screen turns these into words.
+ */
+sealed interface BackupStatus {
+    data class Exported(val counts: BackupCounts) : BackupStatus
+    data class Restored(val counts: BackupCounts) : BackupStatus
+    data class Failed(val failure: BackupFailure) : BackupStatus
+
+    val isError: Boolean get() = this is Failed
+}
 
 class SettingsViewModel(
     private val settingsService: SettingsService,
@@ -23,11 +38,14 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     val themeMode: StateFlow<ThemeMode> = settingsService.themeMode
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
-            ThemeMode.DEFAULT,
-        )
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemeMode.DEFAULT)
+
+    val language: StateFlow<AppLanguage> = settingsService.language
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppLanguage.DEFAULT)
+
+    /** null = never exported. */
+    val lastBackupAt: StateFlow<Instant?> = settingsService.lastBackupAt
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
@@ -39,28 +57,33 @@ class SettingsViewModel(
         viewModelScope.launch { settingsService.setThemeMode(mode) }
     }
 
+    fun setLanguage(language: AppLanguage) {
+        viewModelScope.launch { settingsService.setLanguage(language) }
+    }
+
     fun suggestedFileName(): String = backupService.suggestedFileName()
 
     fun export(target: Uri) = run(
         action = { backupService.export(target) },
-        successPrefix = "已导出",
+        onSuccess = BackupStatus::Exported,
     )
 
     fun import(source: Uri) = run(
         action = { backupService.import(source) },
-        successPrefix = "已恢复",
+        onSuccess = BackupStatus::Restored,
     )
 
-    private fun run(action: suspend () -> BackupResult, successPrefix: String) {
+    private fun run(
+        action: suspend () -> BackupResult,
+        onSuccess: (BackupCounts) -> BackupStatus,
+    ) {
         if (_busy.value) return // one at a time; a second tap must not race the first
         viewModelScope.launch {
             _busy.value = true
             _status.value = null
             _status.value = when (val result = action()) {
-                is BackupResult.Success ->
-                    BackupStatus("$successPrefix:${result.counts.describe()}", isError = false)
-
-                is BackupResult.Failure -> BackupStatus(result.message, isError = true)
+                is BackupResult.Success -> onSuccess(result.counts)
+                is BackupResult.Failure -> BackupStatus.Failed(result.failure)
             }
             _busy.value = false
         }

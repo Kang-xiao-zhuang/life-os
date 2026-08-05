@@ -20,7 +20,12 @@
         android:textColor="@color/widget_accent"
         android:textSize="20sp" />
 
+    <!--
+      android:text is the fallback the launcher inflates with; the provider overwrites it with the
+      in-app language, which the launcher's own resources know nothing about.
+    -->
     <TextView
+        android:id="@+id/widget_label"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"

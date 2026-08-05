@@ -13,11 +13,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.zk.lifeos.R
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.LifeOsFab
@@ -25,6 +27,7 @@ import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.components.TaskEditSheet
 import com.zk.lifeos.ui.components.TaskRow
+import com.zk.lifeos.ui.components.itemCount
 import com.zk.lifeos.ui.rememberContainer
 import java.time.LocalDate
 
@@ -66,18 +69,21 @@ fun ProjectDetailScreen(
     val done = tasks.filter { it.done }
 
     LifeOsScreen(
-        title = name ?: "项目",
+        title = name ?: stringResource(R.string.projects_title),
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
             }
         },
-        floatingActionButton = { LifeOsFab("新任务") { editor = Editor.New } },
+        floatingActionButton = { LifeOsFab(stringResource(R.string.dash_new_task)) { editor = Editor.New } },
     ) {
-        SectionCard(title = "待做", trailing = if (open.isEmpty()) null else "${open.size} 项") {
+        SectionCard(
+            title = stringResource(R.string.project_detail_todo),
+            trailing = if (open.isEmpty()) null else itemCount(open.size),
+        ) {
             if (open.isEmpty()) {
-                EmptyHint("没有待做的任务了。")
+                EmptyHint(stringResource(R.string.project_detail_empty))
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     open.forEach { task ->
@@ -93,7 +99,10 @@ fun ProjectDetailScreen(
         }
 
         if (done.isNotEmpty()) {
-            SectionCard(title = "已完成", trailing = "${done.size} 项") {
+            SectionCard(
+                title = stringResource(R.string.project_detail_done),
+                trailing = itemCount(done.size),
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     done.take(20).forEach { task ->
                         TaskRow(
@@ -104,7 +113,7 @@ fun ProjectDetailScreen(
                         )
                     }
                     if (done.size > 20) {
-                        EmptyHint("还有 ${done.size - 20} 项已完成。")
+                        EmptyHint(stringResource(R.string.project_detail_more_done, done.size - 20))
                     }
                 }
             }

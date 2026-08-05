@@ -9,10 +9,15 @@ data class TaskListItem(
     val projectName: String?,
     val projectEmoji: String?,
 ) {
-    /** 「💼 工作」 / 「未归类」 — the label under the title. */
-    val projectLabel: String
+    /**
+     * 「💼 工作」— the label under the title, or null when the task belongs to no project.
+     *
+     * Null rather than a ready-made "未归类": a model has no access to string resources, so the
+     * wording for the empty case belongs to the UI, in whichever language is switched on.
+     */
+    val projectLabel: String?
         get() = when {
-            projectName == null -> "未归类"
+            projectName == null -> null
             projectEmoji.isNullOrEmpty() -> projectName
             else -> "$projectEmoji $projectName"
         }

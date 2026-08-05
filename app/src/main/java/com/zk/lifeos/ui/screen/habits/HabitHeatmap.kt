@@ -19,13 +19,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.zk.lifeos.R
 import com.zk.lifeos.model.HabitMonth
+import com.zk.lifeos.ui.currentLocale
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.format.TextStyle
 
-private val weekdayLabels = listOf("一", "二", "三", "四", "五", "六", "日")
+// Weekday initials come from resources so the grid reads correctly in either language.
 
 /**
  * 这个月坚持得怎么样 — a month of check-ins as a shaded grid, Monday first.
@@ -46,6 +51,7 @@ fun HabitHeatmap(
 ) {
     val scheme = MaterialTheme.colorScheme
     val today = LocalDate.now()
+    val weekdayLabels = stringArrayResource(R.array.weekday_initials)
     val firstDay = month.month.atDay(1)
     val daysInMonth = month.month.lengthOfMonth()
     // Monday = 0 … Sunday = 6, so the first row starts in the right column.
@@ -54,10 +60,19 @@ fun HabitHeatmap(
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onPreviousMonth) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "上个月")
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = stringResource(R.string.heatmap_prev_month),
+                )
             }
             Text(
-                text = "${month.month.year} 年 ${month.month.monthValue} 月",
+                // Each locale picks what it needs: English uses the month name, Chinese the number.
+                text = stringResource(
+                    R.string.heatmap_month,
+                    month.month.month.getDisplayName(TextStyle.FULL, currentLocale()),
+                    month.month.year,
+                    month.month.monthValue,
+                ),
                 style = MaterialTheme.typography.titleSmall,
                 color = scheme.onSurface,
                 textAlign = TextAlign.Center,
@@ -67,7 +82,7 @@ fun HabitHeatmap(
             IconButton(onClick = onNextMonth, enabled = !month.isCurrentMonth) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "下个月",
+                    contentDescription = stringResource(R.string.heatmap_next_month),
                     tint = if (month.isCurrentMonth) scheme.surfaceVariant else scheme.onSurfaceVariant,
                 )
             }
@@ -114,9 +129,9 @@ fun HabitHeatmap(
 
         Text(
             text = if (month.habitCount == 0) {
-                "还没有习惯,先加一个。"
+                stringResource(R.string.heatmap_no_habits)
             } else {
-                "打卡 ${month.activeDays} 天 · 全勤 ${month.perfectDays} 天"
+                stringResource(R.string.heatmap_summary, month.activeDays, month.perfectDays)
             },
             style = MaterialTheme.typography.labelSmall,
             color = scheme.onSurfaceVariant,

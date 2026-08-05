@@ -26,16 +26,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zk.lifeos.R
+import com.zk.lifeos.model.AppLanguage
+import com.zk.lifeos.model.BackupCounts
+import com.zk.lifeos.model.BackupFailure
 import com.zk.lifeos.model.ThemeMode
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.ConfirmDialog
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
+import com.zk.lifeos.ui.currentLocale
 import com.zk.lifeos.widget.WidgetPinning
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.TextStyle
+import java.time.temporal.ChronoUnit
 
 /**
  * 设置. Not a bottom-bar tab — reached from the Dashboard top bar, per spec.
@@ -50,6 +62,8 @@ fun SettingsScreen(
 ) {
     val viewModel: SettingsViewModel = viewModel(factory = LifeOsViewModelFactory.Factory)
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val language by viewModel.language.collectAsStateWithLifecycle()
+    val lastBackupAt by viewModel.lastBackupAt.collectAsStateWithLifecycle()
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     val status by viewModel.status.collectAsStateWithLifecycle()
     var confirmImport by remember { mutableStateOf(false) }
@@ -63,29 +77,33 @@ fun SettingsScreen(
     ) { uri -> uri?.let(viewModel::import) }
 
     LifeOsScreen(
-        title = "设置",
+        title = stringResource(R.string.nav_settings),
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
             }
         },
     ) {
         ThemeCard(themeMode = themeMode, onSelect = viewModel::setThemeMode)
 
-        SectionCard(title = "数据") {
+        LanguageCard(language = language, onSelect = viewModel::setLanguage)
+
+        SectionCard(title = stringResource(R.string.settings_data)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                EmptyHint("备份是一个 LifeOS_Backup.zip,里面有数据库、附件和设置。存到哪由你选,不联网。")
+                EmptyHint(stringResource(R.string.settings_data_hint))
+
+                LastBackupLine(lastBackupAt)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedButton(
                         onClick = { exportLauncher.launch(viewModel.suggestedFileName()) },
                         enabled = !busy,
-                    ) { Text("导出") }
+                    ) { Text(stringResource(R.string.settings_export)) }
                     OutlinedButton(
                         onClick = { confirmImport = true },
                         enabled = !busy,
-                    ) { Text("导入") }
+                    ) { Text(stringResource(R.string.settings_import)) }
                     if (busy) {
                         CircularProgressIndicator(
                             modifier = Modifier
@@ -98,7 +116,7 @@ fun SettingsScreen(
 
                 status?.let { current ->
                     Text(
-                        text = current.message,
+                        text = statusText(current),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (current.isError) {
                             MaterialTheme.colorScheme.error
@@ -117,11 +135,9 @@ fun SettingsScreen(
 
     if (confirmImport) {
         ConfirmDialog(
-            title = "导入备份?",
-            // Plain text — Compose renders no Markdown, so asterisks would just show up.
-            message = "现在的项目、任务、习惯、打卡、记录和复盘,会被备份里的内容全部替换。" +
-                "如果当前数据还有用,先导出一份再继续。",
-            confirmText = "选择文件",
+            title = stringResource(R.string.settings_import_title),
+            message = stringResource(R.string.settings_import_message),
+            confirmText = stringResource(R.string.settings_choose_file),
             onDismiss = { confirmImport = false },
             onConfirm = {
                 confirmImport = false
@@ -133,21 +149,93 @@ fun SettingsScreen(
     }
 }
 
+/**
+ * How stale the backup is.
+ *
+ * Everything lives on one device with no sync, so the honest thing to show is not a button but the
+ * date: "上次备份:12 天前" is what makes someone tap 导出. It turns amber once the gap is wide
+ * enough to hurt, and when there has never been a backup at all.
+ */
+@Composable
+private fun LastBackupLine(lastBackupAt: Instant?) {
+    val stale = lastBackupAt == null ||
+        ChronoUnit.DAYS.between(lastBackupAt.atZone(ZoneId.systemDefault()).toLocalDate(), LocalDate.now()) >= 14
+    Text(
+        text = if (lastBackupAt == null) {
+            stringResource(R.string.settings_never_backed_up)
+        } else {
+            stringResource(R.string.settings_last_backup, relativeDay(lastBackupAt))
+        },
+        style = MaterialTheme.typography.bodySmall,
+        color = if (stale) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** 今天 / 昨天 / N 天前 for the recent past, an absolute date once "N 天前" stops meaning anything. */
+@Composable
+private fun relativeDay(instant: Instant): String {
+    val date = instant.atZone(ZoneId.systemDefault()).toLocalDate()
+    val days = ChronoUnit.DAYS.between(date, LocalDate.now())
+    return when {
+        days <= 0L -> stringResource(R.string.label_today)
+        days == 1L -> stringResource(R.string.label_yesterday)
+        days < 30L -> pluralStringResource(R.plurals.count_days_ago, days.toInt(), days.toInt())
+        else -> stringResource(
+            R.string.journal_date_full,
+            date.month.getDisplayName(TextStyle.FULL, currentLocale()),
+            date.dayOfMonth,
+            date.year,
+            date.monthValue,
+        )
+    }
+}
+
+/** The typed [BackupStatus] rendered into the current language. */
+@Composable
+private fun statusText(status: BackupStatus): String = when (status) {
+    is BackupStatus.Exported -> stringResource(R.string.backup_exported, summary(status.counts))
+    is BackupStatus.Restored -> stringResource(R.string.backup_restored, summary(status.counts))
+    is BackupStatus.Failed -> when (val failure = status.failure) {
+        BackupFailure.CannotWrite -> stringResource(R.string.backup_error_cannot_write)
+        BackupFailure.CannotRead -> stringResource(R.string.backup_error_cannot_read)
+        BackupFailure.NotABackup -> stringResource(R.string.backup_error_not_a_backup)
+        is BackupFailure.SchemaMismatch -> stringResource(
+            R.string.backup_error_schema_mismatch,
+            failure.backupVersion,
+            failure.appVersion,
+        )
+        is BackupFailure.Unexpected -> failure.message
+            ?.let { stringResource(R.string.backup_error_unexpected, it) }
+            ?: stringResource(R.string.backup_error_unknown)
+    }
+}
+
+@Composable
+private fun summary(counts: BackupCounts): String = stringResource(
+    R.string.backup_summary,
+    counts.projects,
+    counts.tasks,
+    counts.habits,
+    counts.habitChecks,
+    counts.captures,
+    counts.journalEntries,
+)
+
 /** 桌面快捷记录 — offered here because nobody discovers widgets by browsing the widget picker. */
 @Composable
 private fun HomeScreenCard() {
     val context = LocalContext.current
     val supported = remember { WidgetPinning.isSupported(context) }
 
-    SectionCard(title = "桌面") {
+    SectionCard(title = stringResource(R.string.settings_home_screen)) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            EmptyHint("放一个「记一笔」小组件在桌面上,想到什么一步就能记下来。长按 App 图标也有同样的入口。")
+            EmptyHint(stringResource(R.string.settings_widget_hint))
             if (supported) {
                 OutlinedButton(onClick = { WidgetPinning.requestPin(context) }) {
-                    Text("添加到桌面")
+                    Text(stringResource(R.string.settings_add_widget))
                 }
             } else {
-                EmptyHint("这个桌面不支持一键添加,请长按桌面空白处,从小组件列表里找 LifeOS。")
+                EmptyHint(stringResource(R.string.settings_widget_unsupported))
             }
         }
     }
@@ -161,28 +249,59 @@ private fun AboutCard() {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
         }.getOrNull() ?: "?"
     }
-    SectionCard(title = "关于", trailing = "v$version") {
-        EmptyHint("LifeOS · 本地优先的个人工作台。数据只存在这台设备上,没有账号,不联网,零权限。")
+    SectionCard(
+        title = stringResource(R.string.settings_about),
+        trailing = stringResource(R.string.settings_version, version),
+    ) {
+        EmptyHint(stringResource(R.string.settings_about_text))
     }
 }
 
 @Composable
 private fun ThemeCard(themeMode: ThemeMode, onSelect: (ThemeMode) -> Unit) {
     val options = listOf(
-        ThemeMode.SYSTEM to "跟随系统",
-        ThemeMode.LIGHT to "浅色",
-        ThemeMode.DARK to "深色",
+        ThemeMode.SYSTEM to stringResource(R.string.theme_system),
+        ThemeMode.LIGHT to stringResource(R.string.theme_light),
+        ThemeMode.DARK to stringResource(R.string.theme_dark),
     )
-    SectionCard(title = "外观") {
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            options.forEachIndexed { index, (mode, label) ->
-                SegmentedButton(
-                    selected = themeMode == mode,
-                    onClick = { onSelect(mode) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                    label = { Text(label) },
-                )
-            }
+    SectionCard(title = stringResource(R.string.settings_appearance)) {
+        Segmented(options = options, selected = themeMode, onSelect = onSelect)
+    }
+}
+
+/**
+ * 语言 — an in-app switch, not a jump to the system settings.
+ *
+ * The names are written in their own language on purpose: someone who opened this card because the
+ * app is in a language they can't read still has to be able to find their way out of it.
+ */
+@Composable
+private fun LanguageCard(language: AppLanguage, onSelect: (AppLanguage) -> Unit) {
+    val options = listOf(
+        AppLanguage.SYSTEM to stringResource(R.string.language_system),
+        AppLanguage.CHINESE to stringResource(R.string.language_chinese),
+        AppLanguage.ENGLISH to stringResource(R.string.language_english),
+    )
+    SectionCard(title = stringResource(R.string.settings_language)) {
+        Segmented(options = options, selected = language, onSelect = onSelect)
+    }
+}
+
+/** The three-way picker both cards above use. */
+@Composable
+private fun <T> Segmented(
+    options: List<Pair<T, String>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+) {
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, (value, label) ->
+            SegmentedButton(
+                selected = selected == value,
+                onClick = { onSelect(value) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                label = { Text(label) },
+            )
         }
     }
 }
