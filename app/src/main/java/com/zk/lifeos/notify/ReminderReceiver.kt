@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.zk.lifeos.LifeOsApplication
 import com.zk.lifeos.model.ReminderKind
+import com.zk.lifeos.widget.MitWidgetProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,6 +38,9 @@ class ReminderReceiver : BroadcastReceiver() {
                         if (kind != null) reminders.fire(kind)
                     }
                 }
+                // Whatever woke us, the day may have rolled over while the app was never opened —
+                // and an MIT widget still showing yesterday's tasks is worse than showing nothing.
+                MitWidgetProvider.requestUpdate(context)
             } finally {
                 pending.finish()
             }

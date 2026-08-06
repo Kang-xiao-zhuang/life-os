@@ -8,7 +8,6 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.zk.lifeos.LifeOsApplication
 import com.zk.lifeos.LifeOsIntents
 import com.zk.lifeos.MainActivity
 import com.zk.lifeos.R
@@ -30,14 +29,19 @@ import com.zk.lifeos.model.ReminderKind
  */
 class ReminderNotifier(private val context: Context) {
 
-    /** Posts the reminder for [kind], or nothing at all if [snapshot] holds nothing worth saying. */
-    fun post(kind: ReminderKind, snapshot: DashboardSnapshot) {
+    /**
+     * Posts the reminder for [kind], or nothing at all if [snapshot] holds nothing worth saying.
+     *
+     * [language] is passed in rather than read from `LifeOsApplication.currentLanguage`: an alarm can
+     * fire in a process that has only just started, where that field is still the default.
+     */
+    fun post(kind: ReminderKind, snapshot: DashboardSnapshot, language: AppLanguage) {
         val manager = NotificationManagerCompat.from(context)
         // Notifications may be off at the system level (denied on 33+, or switched off later). No
         // point building text nobody will see, and notify() would silently drop it anyway.
         if (!manager.areNotificationsEnabled()) return
 
-        val strings = context.localized(language())
+        val strings = context.localized(language)
         val parts = when (kind) {
             ReminderKind.MORNING -> morningParts(strings, snapshot)
             ReminderKind.EVENING -> eveningParts(strings, snapshot)
@@ -125,9 +129,6 @@ class ReminderNotifier(private val context: Context) {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
     }
-
-    private fun language(): AppLanguage =
-        (context.applicationContext as? LifeOsApplication)?.currentLanguage ?: AppLanguage.DEFAULT
 
     private val ReminderKind.notificationId: Int get() = 100 + ordinal
 

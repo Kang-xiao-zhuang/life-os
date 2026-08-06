@@ -63,6 +63,21 @@
         </receiver>
 
         <!--
+          今日最重要 on the home screen. Unlike the capture widget this one shows data, so it is
+          pushed updates by the app (see MitWidgetProvider) rather than polled by the system.
+        -->
+        <receiver
+            android:name=".widget.MitWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mit_widget_info" />
+        </receiver>
+
+        <!--
           Daily reminders. The alarms target this receiver by explicit component, so the filter is
           only for the two system broadcasts that mean "your alarms are gone, set them again".
           exported="false" is correct even so: protected system broadcasts still reach it.

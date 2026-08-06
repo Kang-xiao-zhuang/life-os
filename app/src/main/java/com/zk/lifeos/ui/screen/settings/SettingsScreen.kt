@@ -61,6 +61,7 @@ import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.currentLocale
+import com.zk.lifeos.widget.LifeOsWidget
 import com.zk.lifeos.widget.WidgetPinning
 import java.time.Instant
 import java.time.LocalDate
@@ -460,8 +461,13 @@ private fun HomeScreenCard() {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             EmptyHint(stringResource(R.string.settings_widget_hint))
             if (supported) {
-                OutlinedButton(onClick = { WidgetPinning.requestPin(context) }) {
-                    Text(stringResource(R.string.settings_add_widget))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = { WidgetPinning.requestPin(context, LifeOsWidget.CAPTURE) }
+                    ) { Text(stringResource(R.string.settings_add_widget_capture)) }
+                    OutlinedButton(
+                        onClick = { WidgetPinning.requestPin(context, LifeOsWidget.MIT) }
+                    ) { Text(stringResource(R.string.settings_add_widget_mit)) }
                 }
             } else {
                 EmptyHint(stringResource(R.string.settings_widget_unsupported))

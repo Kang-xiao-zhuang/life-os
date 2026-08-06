@@ -13,6 +13,10 @@ import com.zk.lifeos.MainActivity
 import com.zk.lifeos.R
 import com.zk.lifeos.localized
 import com.zk.lifeos.model.AppLanguage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Home-screen widget: one tap goes straight to the capture field.
@@ -31,27 +35,47 @@ class CaptureWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
-        // A provider always runs in the app's own process, so the Application is available and
-        // already knows the language — no blocking read of DataStore on the main thread.
-        val language = (context.applicationContext as? LifeOsApplication)?.currentLanguage
-            ?: AppLanguage.DEFAULT
-        render(context, appWidgetManager, appWidgetIds, language)
+        val app = context.applicationContext as? LifeOsApplication ?: return
+        // The persisted language, awaited — not LifeOsApplication.currentLanguage. This broadcast
+        // arrives during `install -r` in a process where the settings Flow has not emitted yet, so
+        // the volatile field would still say「跟随系统」and the widget would render in the phone's
+        // language, overwriting the correct push from the app's own collector.
+        val pending = goAsync()
+        CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+            try {
+                render(context, appWidgetManager, appWidgetIds, app.storedLanguage())
+            } finally {
+                pending.finish()
+            }
+        }
     }
 
     companion object {
         private const val REQUEST_CAPTURE = 1
 
         /**
-         * Re-renders every placed instance. Called when the language changes; a no-op when the user
-         * has no widget on their home screen.
+         * Asks this provider to re-render, by broadcasting to itself.
+         *
+         * It deliberately does **not** render here. Pushing `RemoteViews` straight from the app was
+         * the original design and it was quietly fragile: around a package update the host unbinds
+         * and rebinds the widget, so `getAppWidgetIds` could return empty for a moment, the push
+         * would no-op, and nothing ever retried — leaving a widget stuck in the previous language
+         * until it was removed and added again. Routing everything through [onUpdate] means one
+         * render path, and the system delivers the broadcast whether or not the app is alive.
          */
-        fun refreshAll(context: Context, language: AppLanguage) {
+        fun requestUpdate(context: Context) {
             val manager = AppWidgetManager.getInstance(context) ?: return
             val ids = manager.getAppWidgetIds(
                 ComponentName(context, CaptureWidgetProvider::class.java)
             )
             if (ids.isEmpty()) return
-            render(context, manager, ids, language)
+            // Explicit component, so a non-exported receiver in our own uid still receives it.
+            context.sendBroadcast(
+                Intent(context, CaptureWidgetProvider::class.java).apply {
+                    action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                }
+            )
         }
 
         private fun render(

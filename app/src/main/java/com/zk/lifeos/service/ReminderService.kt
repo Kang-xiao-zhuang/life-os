@@ -47,7 +47,11 @@ class ReminderService(
         // already pending, and a cancel can lose the race.
         if (stored.enabled(kind)) {
             // LocalDate.now() read here, at firing time — the alarm may have been armed yesterday.
-            notifier.post(kind, dashboardService.observe(LocalDate.now()).first())
+            notifier.post(
+                kind = kind,
+                snapshot = dashboardService.observe(LocalDate.now()).first(),
+                language = settingsRepository.language.first(),
+            )
         }
         scheduler.sync(stored)
     }

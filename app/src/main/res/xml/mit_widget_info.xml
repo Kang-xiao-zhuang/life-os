@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  updatePeriodMillis=0 even though this widget *does* show data: the system's own refresh cannot go
+  below 30 minutes, which would be both too slow to be correct and too often to be free. The app
+  pushes an update whenever the MIT list changes instead, and the daily reminder alarm refreshes it
+  as well. See MitWidgetProvider.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_mit_description"
+    android:initialLayout="@layout/widget_mit"
+    android:minWidth="180dp"
+    android:minHeight="80dp"
+    android:previewImage="@drawable/ic_launcher_foreground"
+    android:previewLayout="@layout/widget_mit"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="3"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

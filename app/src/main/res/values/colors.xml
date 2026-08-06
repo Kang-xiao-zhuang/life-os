@@ -8,5 +8,7 @@
     <color name="widget_background">#FF171922</color>
     <color name="widget_outline">#FF3A3F52</color>
     <color name="widget_text">#FFE6E8F0</color>
+    <!-- Matches DarkOnSurfaceVariant — for the「今天还没定」line, which shouldn't read as content. -->
+    <color name="widget_text_dim">#FF9EA3B5</color>
     <color name="widget_accent">#FF93B7F5</color>
 </resources>

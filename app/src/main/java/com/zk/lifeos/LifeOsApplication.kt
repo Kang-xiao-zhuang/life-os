@@ -7,10 +7,15 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.zk.lifeos.model.AppLanguage
 import com.zk.lifeos.widget.CaptureWidgetProvider
+import com.zk.lifeos.widget.MitWidgetProvider
+import com.zk.lifeos.widget.MitWidgetState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 /** Holds the app-wide object graph, and keeps the launcher shortcut and widget in the right language. */
@@ -20,14 +25,19 @@ class LifeOsApplication : Application() {
         private set
 
     /**
-     * The language everything outside Compose should use.
+     * The language everything outside Compose should use, for callers that cannot suspend.
      *
-     * Read from [CaptureWidgetProvider.onUpdate], which the system can invoke at any moment (widget
-     * added, device rebooted) and cannot suspend to await a Flow.
+     * **Do not read this from a widget's `onUpdate`.** It is only correct once the settings Flow has
+     * emitted, and `onUpdate` runs in a fresh process during `install -r` — before that. The widget
+     * then rendered in the *system* language and, because the broadcast races the push below, could
+     * land after it and win. Use [storedLanguage] from a `goAsync` block instead.
      */
     @Volatile
     var currentLanguage: AppLanguage = AppLanguage.DEFAULT
         private set
+
+    /** The persisted language, awaited. Always correct, whatever stage of startup we are at. */
+    suspend fun storedLanguage(): AppLanguage = container.settingsService.language.first()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -41,7 +51,9 @@ class LifeOsApplication : Application() {
             container.settingsService.language.distinctUntilChanged().collect { language ->
                 currentLanguage = language
                 registerCaptureShortcut(language)
-                CaptureWidgetProvider.refreshAll(this@LifeOsApplication, language)
+                // Both widgets carry translated labels; each re-reads the language for itself.
+                CaptureWidgetProvider.requestUpdate(this@LifeOsApplication)
+                MitWidgetProvider.requestUpdate(this@LifeOsApplication)
             }
         }
 
@@ -53,7 +65,28 @@ class LifeOsApplication : Application() {
                 container.reminderService.sync()
             }
         }
+
+        // The MIT widget is pushed to rather than polling: the system's own widget refresh floor is
+        // 30 minutes, too slow to be right. distinctUntilChanged on the *rendered* state means
+        // ticking an unrelated task doesn't redraw anyone's home screen.
+        scope.launch {
+            mitWidgetState()
+                .distinctUntilChanged()
+                .collect { MitWidgetProvider.requestUpdate(this@LifeOsApplication) }
+        }
     }
+
+    /** Today's MIT reduced to what the widget shows. */
+    private fun mitWidgetState(): Flow<MitWidgetState> =
+        container.taskService.observeMit().map { tasks ->
+            MitWidgetState(
+                openTitles = tasks.filterNot { it.done }.map { it.title },
+                anyFlagged = tasks.isNotEmpty(),
+            )
+        }
+
+    /** One-shot read, for [MitWidgetProvider.onUpdate] — it cannot wait on a Flow. */
+    suspend fun currentMitState(): MitWidgetState = mitWidgetState().first()
 
     /**
      * Long-press the launcher icon → 记一笔.

@@ -19,6 +19,10 @@ class TaskService(private val taskRepository: TaskRepository) {
 
     fun observeOpenMitCount(): Flow<Int> = taskRepository.observeOpenMitCount()
 
+    /** 今日最重要 for [today], open ones plus whatever was finished today. Used by the home-screen widget. */
+    fun observeMit(today: LocalDate = LocalDate.now()): Flow<List<Task>> =
+        taskRepository.observeMit(today)
+
     /**
      * 「把逾期的挪到今天」. They are already late, and a growing red backlog is how the list stops
      * being read at all.

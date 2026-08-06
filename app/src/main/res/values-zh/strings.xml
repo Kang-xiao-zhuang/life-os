@@ -14,6 +14,8 @@
     <string name="widget_capture_label">记一笔</string>
     <string name="widget_capture_description">一步记下想到的任何东西</string>
     <string name="shortcut_capture_long_label">快速记录一笔</string>
+    <string name="widget_mit_description">在桌面上一眼看到今天最重要的事</string>
+    <string name="widget_mit_empty">今天还没定</string>
 
     <!-- ===== 通用 ===== -->
     <string name="action_cancel">取消</string>
@@ -244,8 +246,9 @@
     <string name="settings_import_message">现在的项目、任务、习惯、打卡、记录和复盘,会被备份里的内容全部替换。如果当前数据还有用,先导出一份再继续。</string>
     <string name="settings_choose_file">选择文件</string>
     <string name="settings_home_screen">桌面</string>
-    <string name="settings_widget_hint">放一个「记一笔」小组件在桌面上,想到什么一步就能记下来。长按 App 图标也有同样的入口。</string>
-    <string name="settings_add_widget">添加到桌面</string>
+    <string name="settings_widget_hint">两个小组件:「记一笔」让你一步记下想到的东西,「今日最重要」让你不打开 App 也能看到今天那一两件事。长按 App 图标也有记录入口。</string>
+    <string name="settings_add_widget_capture">添加「记一笔」</string>
+    <string name="settings_add_widget_mit">添加「今日最重要」</string>
     <string name="settings_widget_unsupported">这个桌面不支持一键添加,请长按桌面空白处,从小组件列表里找 LifeOS。</string>
     <string name="settings_about">关于</string>
     <string name="settings_about_text">LifeOS · 本地优先的个人工作台。数据只存在这台设备上,没有账号,不联网。唯一用到的权限是通知,只用来发你自己设的提醒。</string>
