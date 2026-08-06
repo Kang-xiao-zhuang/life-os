@@ -1,13 +1,14 @@
 package com.zk.lifeos.service
 
 import com.zk.lifeos.data.repository.TaskRepository
+import com.zk.lifeos.model.RepeatRule
 import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.model.TaskListItem
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
-/** 任务管理. Kept deliberately plain: no filters, no sub-tasks, no recurrence. */
+/** 任务管理. Kept deliberately plain: no filters, no sub-tasks. */
 class TaskService(private val taskRepository: TaskRepository) {
 
     fun observeByProject(projectId: Long): Flow<List<Task>> = taskRepository.observeByProject(projectId)
@@ -48,6 +49,7 @@ class TaskService(private val taskRepository: TaskRepository) {
         projectId: Long? = null,
         dueDate: LocalDate? = null,
         isMit: Boolean = false,
+        repeatRule: RepeatRule? = null,
     ): Boolean {
         val clean = title.trim()
         if (clean.isEmpty()) return false
@@ -57,6 +59,7 @@ class TaskService(private val taskRepository: TaskRepository) {
             projectId = projectId,
             dueDate = dueDate,
             isMit = isMit,
+            repeatRule = repeatRule,
         )
         return true
     }
@@ -68,6 +71,7 @@ class TaskService(private val taskRepository: TaskRepository) {
         projectId: Long?,
         dueDate: LocalDate?,
         isMit: Boolean,
+        repeatRule: RepeatRule? = null,
     ): Boolean {
         val clean = title.trim()
         if (clean.isEmpty()) return false
@@ -78,12 +82,31 @@ class TaskService(private val taskRepository: TaskRepository) {
             projectId = projectId,
             dueDate = dueDate,
             isMit = isMit,
+            repeatRule = repeatRule,
         )
         return true
     }
 
-    /** Tick / untick. [Task.done] is what the caller currently sees, so this flips it. */
-    suspend fun toggleDone(task: Task) = taskRepository.setDone(task.id, !task.done)
+    /**
+     * Tick / untick. [Task.done] is what the caller currently sees, so this flips it.
+     *
+     * Completing a repeating task also creates the next occurrence, and un-completing takes that
+     * occurrence back. The pairing matters: without the second half, tick-then-untick — an ordinary
+     * mis-tap — would leave a duplicate sitting in the future, and this app's rule is that no single
+     * step leaves you worse off than before you took it. The removal is deliberately narrow (see
+     * `TaskDao.findGeneratedOccurrence`), so anything you have since edited or ticked off is safe.
+     */
+    suspend fun toggleDone(task: Task, today: LocalDate = LocalDate.now()) {
+        val completing = !task.done
+        taskRepository.setDone(task.id, completing)
+
+        val next = task.nextOccurrence(today) ?: return
+        if (completing) {
+            taskRepository.createNextOccurrence(task, next)
+        } else {
+            taskRepository.removeGeneratedOccurrence(task, next)
+        }
+    }
 
     suspend fun delete(id: Long) = taskRepository.delete(id)
 }

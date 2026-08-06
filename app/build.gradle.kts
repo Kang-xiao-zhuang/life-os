@@ -32,8 +32,10 @@ android {
         targetSdk = 36
         // Bump versionCode on every build you actually install — Android refuses to update an APK
         // with a code equal to or lower than the installed one.
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        // 1.1.0, not 1.0.1: the schema moved to v2, so backups taken by 1.0.0 can no longer be
+        // imported. That is a big enough consequence to be visible in the version number.
+        versionName = "1.1.0"
         // Needed for the instrumented backup round-trip test.
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

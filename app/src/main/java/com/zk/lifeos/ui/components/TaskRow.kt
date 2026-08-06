@@ -129,6 +129,16 @@ fun TaskRow(
                 )
             }
         }
+        // A repeating task looks identical to a one-off otherwise, and「这条会自己回来」is exactly the
+        // thing you want to know before deciding whether to bother finishing it today.
+        if (task.repeatRule != null && !task.done) {
+            Text(
+                text = stringResource(task.repeatRule.labelRes),
+                style = MaterialTheme.typography.labelSmall,
+                color = scheme.outline,
+                modifier = Modifier.padding(start = 8.dp, top = 6.dp),
+            )
+        }
         if (task.dueDate != null && !task.done) {
             Text(
                 text = dueLabel(task.dueDate, today),

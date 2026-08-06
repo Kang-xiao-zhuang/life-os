@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.zk.lifeos.data.db.dao.CaptureDao
 import com.zk.lifeos.data.db.dao.HabitDao
 import com.zk.lifeos.data.db.dao.JournalDao
@@ -31,6 +33,10 @@ import java.io.File
  *
  * So: bump [SCHEMA_VERSION], write a `Migration(old, new)`, add it to [MIGRATIONS], and check the
  * generated JSON under `app/schemas/` into git so the change is reviewable.
+ *
+ * **A bump also invalidates existing backups.** `config.json` records the schema version and
+ * [openBackup] refuses an archive that doesn't match, so an export taken before the bump can no
+ * longer be imported. Say so in the release notes and take a fresh export after upgrading.
  */
 @Database(
     entities = [
@@ -65,10 +71,21 @@ abstract class LifeOsDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "lifeos.db"
-        const val SCHEMA_VERSION = 1
+        const val SCHEMA_VERSION = 2
 
-        /** Empty while the schema is still at its first version. See the class docs. */
-        private val MIGRATIONS = emptyArray<androidx.room.migration.Migration>()
+        /**
+         * v1 → v2: `tasks.repeatRule` for 重复任务.
+         *
+         * Nullable with no default, because null *is* the meaning we want for every existing row —
+         * 「不重复」. Nothing else changes, so no table rebuild and no data movement.
+         */
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE tasks ADD COLUMN repeatRule TEXT DEFAULT NULL")
+            }
+        }
+
+        private val MIGRATIONS = arrayOf<Migration>(MIGRATION_1_2)
 
         fun build(context: Context): LifeOsDatabase =
             Room.databaseBuilder(context, LifeOsDatabase::class.java, NAME)

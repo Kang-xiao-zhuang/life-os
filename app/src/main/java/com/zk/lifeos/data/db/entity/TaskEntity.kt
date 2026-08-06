@@ -6,7 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * 任务. Kept deliberately thin — no tags, no sub-tasks, no recurrence (see 开发原则「保持界面简单」).
+ * 任务. Kept deliberately thin — no tags, no sub-tasks.
  *
  * Dates are stored as epoch-day [Int] rather than text, so "due today" is an integer compare.
  * A task may exist without a project (captured straight into the inbox).
@@ -41,6 +41,14 @@ data class TaskEntity(
 
     /** 今日最重要任务 (MIT) — at most a couple per day, surfaced at the top of Dashboard. */
     val isMit: Boolean = false,
+
+    /**
+     * `RepeatRule` name — DAILY / WEEKLY / MONTHLY — or null for a one-off task.
+     *
+     * A string rather than an Int so the stored value stays readable in a SQLite dump, and so an
+     * unknown value from a newer build degrades to「不重复」instead of pointing at the wrong rule.
+     */
+    val repeatRule: String? = null,
 
     /** When it was ticked off; null while open. */
     val completedAt: Long? = null,

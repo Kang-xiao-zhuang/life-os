@@ -9,6 +9,7 @@ import com.zk.lifeos.data.db.entity.JournalEntryEntity
 import com.zk.lifeos.data.db.entity.TaskEntity
 import com.zk.lifeos.model.CaptureItem
 import com.zk.lifeos.model.JournalEntry
+import com.zk.lifeos.model.RepeatRule
 import com.zk.lifeos.model.ProjectSummary
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.model.TaskListItem
@@ -41,6 +42,7 @@ internal fun TaskEntity.toModel(): Task = Task(
     done = done,
     dueDate = dueDate?.toLocalDate(),
     isMit = isMit,
+    repeatRule = RepeatRule.fromStored(repeatRule),
 )
 
 internal fun TaskWithProject.toModel(): TaskListItem = TaskListItem(

@@ -39,6 +39,7 @@ class AllTasksViewModel(
             projectId = draft.projectId,
             dueDate = draft.dueDate,
             isMit = draft.isMit,
+            repeatRule = draft.repeatRule,
         )
     }
 

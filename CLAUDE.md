@@ -114,6 +114,13 @@ instrumented tests.
 - A task's 备注 shows as one ellipsized line on its row, but only while the task is open — on a
   finished task it is no longer a reminder, just noise. `TaskRow` aligns to `Alignment.Top` because
   a row can now be three lines tall and a centred tick reads as belonging to the second line.
+- **Completing a repeating task creates the next occurrence; un-completing takes it back.** The
+  second half is not optional — tick-then-untick is an ordinary mis-tap, and without it you would be
+  left with a duplicate in the future. `TaskDao.findGeneratedOccurrence` matches narrowly (same
+  title, same rule, same date, still open) so it can never remove something you have since edited.
+  The next occurrence never inherits `isMit`: 今日最重要 is a decision about a day, not a property
+  of the task. Dates anchor on the old `dueDate`, so a weekly task ticked a day late stays on its
+  weekday.
 - **`DashboardService.observe(today)` takes the date as a parameter.** It used to read
   `LocalDate.now()` itself, which froze the day at whatever it was when the flow was first built:
   a resident app showed yesterday's date and ran yesterday's queries after midnight.

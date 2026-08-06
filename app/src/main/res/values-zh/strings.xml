@@ -110,6 +110,12 @@
     <string name="task_notes_label">备注(可选)</string>
     <string name="task_due_date">截止日期</string>
     <string name="task_pick_date">选择日期</string>
+    <string name="task_repeat">重复</string>
+    <string name="task_repeat_hint">勾掉之后会自动生成下一条。</string>
+    <string name="repeat_none">不重复</string>
+    <string name="repeat_daily">每天</string>
+    <string name="repeat_weekly">每周</string>
+    <string name="repeat_monthly">每月</string>
     <string name="task_mit">今日最重要</string>
     <string name="task_mit_warning">今天已经有 %1$d 件最重要的事了 —— 都最重要就等于没有重点。</string>
     <string name="task_project">所属项目</string>

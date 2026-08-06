@@ -2,6 +2,7 @@ package com.zk.lifeos.data.repository
 
 import com.zk.lifeos.data.db.dao.TaskDao
 import com.zk.lifeos.data.db.entity.TaskEntity
+import com.zk.lifeos.model.RepeatRule
 import com.zk.lifeos.model.RescheduledTask
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.model.TaskListItem
@@ -62,6 +63,7 @@ class TaskRepository(private val taskDao: TaskDao) {
         projectId: Long? = null,
         dueDate: LocalDate? = null,
         isMit: Boolean = false,
+        repeatRule: RepeatRule? = null,
     ): Long {
         val now = System.currentTimeMillis()
         return taskDao.insert(
@@ -71,6 +73,7 @@ class TaskRepository(private val taskDao: TaskDao) {
                 projectId = projectId,
                 dueDate = dueDate?.toEpochDayInt(),
                 isMit = isMit,
+                repeatRule = repeatRule?.name,
                 createdAt = now,
                 updatedAt = now,
             )
@@ -84,6 +87,7 @@ class TaskRepository(private val taskDao: TaskDao) {
         projectId: Long?,
         dueDate: LocalDate?,
         isMit: Boolean,
+        repeatRule: RepeatRule?,
     ) = taskDao.update(
         id = id,
         title = title,
@@ -91,6 +95,7 @@ class TaskRepository(private val taskDao: TaskDao) {
         projectId = projectId,
         dueDate = dueDate?.toEpochDayInt(),
         isMit = isMit,
+        repeatRule = repeatRule?.name,
         now = System.currentTimeMillis(),
     )
 
@@ -98,6 +103,35 @@ class TaskRepository(private val taskDao: TaskDao) {
     suspend fun setDone(id: Long, done: Boolean) {
         val now = System.currentTimeMillis()
         taskDao.setDone(id = id, done = done, completedAt = if (done) now else null, now = now)
+    }
+
+    /**
+     * Creates the next occurrence of a repeating task, carrying everything except the MIT flag and
+     * the completion state.
+     *
+     * MIT is deliberately dropped: 「今日最重要」is a decision you make for a particular day, not a
+     * property of the task, so re-flagging next week's copy would put a choice in your list that you
+     * never made.
+     */
+    suspend fun createNextOccurrence(task: Task, on: LocalDate): Long = create(
+        title = task.title,
+        notes = task.notes,
+        projectId = task.projectId,
+        dueDate = on,
+        isMit = false,
+        repeatRule = task.repeatRule,
+    )
+
+    /** Takes back an untouched generated occurrence; see [TaskDao.findGeneratedOccurrence]. */
+    suspend fun removeGeneratedOccurrence(task: Task, on: LocalDate): Boolean {
+        val rule = task.repeatRule ?: return false
+        val existing = taskDao.findGeneratedOccurrence(
+            title = task.title,
+            repeatRule = rule.name,
+            dueDate = on.toEpochDayInt(),
+        ) ?: return false
+        taskDao.delete(existing.id)
+        return true
     }
 
     suspend fun delete(id: Long) = taskDao.delete(id)

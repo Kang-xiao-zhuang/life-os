@@ -103,7 +103,7 @@ interface TaskDao {
     @Query(
         """
         UPDATE tasks SET title = :title, notes = :notes, projectId = :projectId,
-          dueDate = :dueDate, isMit = :isMit, updatedAt = :now
+          dueDate = :dueDate, isMit = :isMit, repeatRule = :repeatRule, updatedAt = :now
         WHERE id = :id
         """
     )
@@ -114,8 +114,26 @@ interface TaskDao {
         projectId: Long?,
         dueDate: Int?,
         isMit: Boolean,
+        repeatRule: String?,
         now: Long,
     )
+
+    /**
+     * The already-generated next occurrence of a repeating task, if it is still untouched.
+     *
+     * Used to take it back when the user un-ticks: completing a repeating task creates the next one,
+     * so an accidental tap followed by an un-tap would otherwise leave a duplicate sitting in the
+     * future. Matched narrowly — same title, same rule, same date, still open — so it can never
+     * remove something the user has since edited or ticked off themselves.
+     */
+    @Query(
+        """
+        SELECT * FROM tasks
+        WHERE done = 0 AND title = :title AND repeatRule = :repeatRule AND dueDate = :dueDate
+        ORDER BY id DESC LIMIT 1
+        """
+    )
+    suspend fun findGeneratedOccurrence(title: String, repeatRule: String, dueDate: Int): TaskEntity?
 
     /** [completedAt] records when it was ticked; null clears it when a task is reopened. */
     @Query("UPDATE tasks SET done = :done, completedAt = :completedAt, updatedAt = :now WHERE id = :id")

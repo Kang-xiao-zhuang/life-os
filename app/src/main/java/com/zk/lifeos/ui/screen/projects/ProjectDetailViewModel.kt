@@ -44,6 +44,7 @@ class ProjectDetailViewModel(
                 projectId = draft.projectId ?: projectId,
                 dueDate = draft.dueDate,
                 isMit = draft.isMit,
+                repeatRule = draft.repeatRule,
             )
         } else {
             taskService.update(
@@ -53,6 +54,7 @@ class ProjectDetailViewModel(
                 projectId = draft.projectId,
                 dueDate = draft.dueDate,
                 isMit = draft.isMit,
+                repeatRule = draft.repeatRule,
             )
         }
     }

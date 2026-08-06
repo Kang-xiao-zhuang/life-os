@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.zk.lifeos.R
 import com.zk.lifeos.model.ProjectSummary
+import com.zk.lifeos.model.RepeatRule
 import com.zk.lifeos.model.Task
 import com.zk.lifeos.service.TaskService
 import com.zk.lifeos.ui.LifeOsOverlayLocalization
@@ -45,6 +46,7 @@ data class TaskDraft(
     val projectId: Long?,
     val dueDate: LocalDate?,
     val isMit: Boolean,
+    val repeatRule: RepeatRule? = null,
 )
 
 /**
@@ -72,6 +74,7 @@ fun TaskEditSheet(
     var projectId by remember { mutableStateOf(existing?.projectId ?: defaultProjectId) }
     var dueDate by remember { mutableStateOf(existing?.dueDate) }
     var isMit by remember { mutableStateOf(existing?.isMit ?: false) }
+    var repeatRule by remember { mutableStateOf(existing?.repeatRule) }
     var showDatePicker by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
@@ -94,7 +97,9 @@ fun TaskEditSheet(
                 onPickDate = { showDatePicker = true },
                 isMit = isMit,
                 onMitToggle = { isMit = !isMit },
-                onSave = { onSave(TaskDraft(title, notes, projectId, dueDate, isMit)) },
+                repeatRule = repeatRule,
+                onRepeatChange = { repeatRule = it },
+                onSave = { onSave(TaskDraft(title, notes, projectId, dueDate, isMit, repeatRule)) },
                 onDismiss = onDismiss,
                 onRequestDelete = if (onDelete == null) null else ({ confirmDelete = true }),
             )
@@ -146,6 +151,8 @@ private fun SheetBody(
     onPickDate: () -> Unit,
     isMit: Boolean,
     onMitToggle: () -> Unit,
+    repeatRule: RepeatRule?,
+    onRepeatChange: (RepeatRule?) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
     onRequestDelete: (() -> Unit)?,
@@ -211,6 +218,42 @@ private fun SheetBody(
                         Text(stringResource(R.string.action_clear))
                     }
                 }
+            }
+        }
+
+        // ---- repeat ----
+        // A row of chips rather than a switch plus a picker: there are only three intervals, so
+        // showing all of them costs one line and removes a step. 「不重复」is a chip too, so turning
+        // repetition off is the same gesture as turning it on.
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = stringResource(R.string.task_repeat),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FilterChip(
+                    selected = repeatRule == null,
+                    onClick = { onRepeatChange(null) },
+                    label = { Text(stringResource(R.string.repeat_none)) },
+                )
+                RepeatRule.entries.forEach { rule ->
+                    FilterChip(
+                        selected = repeatRule == rule,
+                        onClick = { onRepeatChange(rule) },
+                        label = { Text(stringResource(rule.labelRes)) },
+                    )
+                }
+            }
+            if (repeatRule != null) {
+                Text(
+                    text = stringResource(R.string.task_repeat_hint),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
             }
         }
 
