@@ -84,6 +84,8 @@
     <string name="dash_mit_title">今日最重要</string>
     <string name="dash_all_done">都做完了</string>
     <string name="dash_mit_empty">还没有标记最重要的事。新建任务时勾上「今日最重要」,一天挑一到两件就够。</string>
+    <string name="dash_carried_mit_label">昨晚你写下的今天最重要的一件事</string>
+    <string name="dash_carried_mit_adopt">设为今日最重要</string>
     <string name="dash_tasks_title">今日任务</string>
     <string name="dash_tasks_trailing_overdue">%1$d 项 · 逾期 %2$d</string>
     <string name="dash_tasks_empty">今天没有到期的任务。</string>

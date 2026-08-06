@@ -86,6 +86,16 @@ class DashboardViewModel(
 
     fun deleteTask(id: Long) = viewModelScope.launch { taskService.delete(id) }
 
+    /**
+     * Turns yesterday's 明天最重要的一件事 into today's MIT, in one tap.
+     *
+     * No extra state is kept for it: the suggestion only shows while MIT is empty, so accepting it
+     * makes the suggestion disappear on its own.
+     */
+    fun adoptCarriedMit(title: String) = viewModelScope.launch {
+        taskService.create(title = title, dueDate = today.value, isMit = true)
+    }
+
     fun toggleHabit(habitId: Long) = viewModelScope.launch { habitService.toggleToday(habitId) }
 
     /**

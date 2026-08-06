@@ -30,13 +30,20 @@ class DashboardService(
      * again — see `DashboardViewModel.refreshToday`.
      */
     fun observe(today: LocalDate = LocalDate.now()): Flow<DashboardSnapshot> {
+        // Today's review and yesterday's are folded into one flow so the outer combine stays within
+        // the five-argument overload — the vararg form would erase the types.
+        val journals = combine(
+            journalRepository.observeByDate(today),
+            journalRepository.observeByDate(today.minusDays(1)),
+        ) { todayEntry, yesterdayEntry -> todayEntry to yesterdayEntry }
+
         return combine(
             taskRepository.observeMit(today),
             taskRepository.observeDueBy(today),
             habitRepository.observeToday(today),
-            journalRepository.observeByDate(today),
+            journals,
             captureRepository.observeInbox().map { it.size },
-        ) { mit, dueToday, habits, journal, inboxCount ->
+        ) { mit, dueToday, habits, (journal, yesterday), inboxCount ->
             val mitIds = mit.mapTo(mutableSetOf()) { it.id }
             DashboardSnapshot(
                 today = today,
@@ -47,6 +54,7 @@ class DashboardService(
                 habits = habits,
                 journal = journal,
                 inboxCount = inboxCount,
+                carriedMit = yesterday.tomorrowMit.trim(),
             )
         }
     }

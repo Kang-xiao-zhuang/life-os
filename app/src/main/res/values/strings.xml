@@ -109,6 +109,8 @@
     <string name="dash_mit_title">Most important today</string>
     <string name="dash_all_done">All done</string>
     <string name="dash_mit_empty">Nothing flagged yet. Tick “Most important today” when creating a task — one or two a day is plenty.</string>
+    <string name="dash_carried_mit_label">Last night you named this as today\'s one thing</string>
+    <string name="dash_carried_mit_adopt">Make it today\'s most important</string>
     <string name="dash_tasks_title">Due today</string>
     <string name="dash_tasks_trailing_overdue">%1$d left · %2$d overdue</string>
     <string name="dash_tasks_empty">Nothing due today.</string>

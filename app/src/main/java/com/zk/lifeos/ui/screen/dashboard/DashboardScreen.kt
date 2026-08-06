@@ -2,6 +2,7 @@ package com.zk.lifeos.ui.screen.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -121,6 +122,7 @@ fun DashboardScreen(
             state = state,
             onToggle = viewModel::toggleTask,
             onEdit = { editor = Editor.Edit(it) },
+            onAdoptCarried = viewModel::adoptCarriedMit,
         )
 
         TodayTasksCard(
@@ -237,6 +239,37 @@ private fun DateHeader(today: LocalDate) {
 }
 
 /**
+ * Yesterday's answer to 明天最重要的一件事, offered back as today's MIT.
+ *
+ * Quiet on purpose — it is a suggestion, not an instruction, and it sits where the empty-state text
+ * used to be. One tap accepts it; ignoring it costs nothing and it disappears as soon as any MIT
+ * exists.
+ */
+@Composable
+private fun CarriedMitSuggestion(text: String, onAdopt: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = stringResource(R.string.dash_carried_mit_label),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.outline,
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+        )
+        TextButton(
+            onClick = onAdopt,
+            contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
+        ) {
+            Text(stringResource(R.string.dash_carried_mit_adopt))
+        }
+    }
+}
+
+/**
  * Today's line, picked *from the date* rather than at random on every draw.
  *
  * Two reasons it is seeded by the day. A fresh pick per recomposition would make the text flicker as
@@ -264,6 +297,7 @@ private fun MitHero(
     state: DashboardSnapshot,
     onToggle: (Task) -> Unit,
     onEdit: (Task) -> Unit,
+    onAdoptCarried: (String) -> Unit,
 ) {
     val open = state.mit.count { !it.done }
     Column(
@@ -295,7 +329,13 @@ private fun MitHero(
         }
 
         if (state.mit.isEmpty()) {
-            EmptyHint(stringResource(R.string.dash_mit_empty))
+            // Yesterday evening you already decided what today's one thing is. Offering it back
+            // beats an empty-state paragraph telling you to decide again.
+            if (state.carriedMit.isNotBlank()) {
+                CarriedMitSuggestion(text = state.carriedMit, onAdopt = { onAdoptCarried(state.carriedMit) })
+            } else {
+                EmptyHint(stringResource(R.string.dash_mit_empty))
+            }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 state.mit.forEach { task ->

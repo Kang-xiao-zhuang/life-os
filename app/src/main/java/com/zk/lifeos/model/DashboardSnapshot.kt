@@ -15,6 +15,13 @@ data class DashboardSnapshot(
     val habits: List<HabitToday> = emptyList(),
     val journal: JournalEntry = JournalEntry(date = LocalDate.now()),
     val inboxCount: Int = 0,
+    /**
+     * What yesterday's review named as 明天最重要的一件事 — blank if it wasn't written.
+     *
+     * The loop it closes: you decide the next day's one thing every evening, and until now the app
+     * forgot it overnight. You had to remember it yourself and retype it.
+     */
+    val carriedMit: String = "",
 ) {
     val habitsCheckedToday: Int get() = habits.count { it.checkedToday }
 
