@@ -69,6 +69,15 @@
         <item>日</item>
     </string-array>
 
+    <!-- 首页「今天」旁边的每日一句。按日期挑,当天不变,第二天换一条。 -->
+    <string-array name="daily_mottos">
+        <item>一次只做一件事</item>
+        <item>慢一点也是在往前</item>
+        <item>今天做一点,好过明天做很多</item>
+        <item>不用赢,只要别停</item>
+        <item>你已经在路上了</item>
+    </string-array>
+
     <!-- ===== 首页 ===== -->
     <string name="dash_today">今天</string>
     <string name="dash_new_task">新任务</string>

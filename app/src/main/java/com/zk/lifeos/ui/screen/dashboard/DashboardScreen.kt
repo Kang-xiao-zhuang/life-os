@@ -3,8 +3,10 @@ package com.zk.lifeos.ui.screen.dashboard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -25,7 +27,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,6 +52,7 @@ import com.zk.lifeos.ui.currentLocale
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.TextStyle
+import kotlin.random.Random
 
 /** Which editor the screen currently has open. */
 private sealed interface Editor {
@@ -193,11 +199,30 @@ private fun DateHeader(today: LocalDate) {
     // keep printing 星期一 after the user switched the app to English.
     val weekday = today.dayOfWeek.getDisplayName(TextStyle.FULL, currentLocale())
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
-            text = stringResource(R.string.label_today),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = stringResource(R.string.label_today),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.alignByBaseline(),
+            )
+            Spacer(Modifier.width(12.dp))
+            // Beside 今天 rather than on a line of its own: 今天 is two characters wide and the rest
+            // of that row is empty, so the motto costs no vertical space and doesn't push the day's
+            // actual work further down. Baseline-aligned, because bottom- or centre-aligning text of
+            // two very different sizes always looks slightly wrong.
+            Text(
+                text = dailyMotto(today),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .alignByBaseline(),
+            )
+        }
         Text(
             text = stringResource(
                 R.string.date_month_day_weekday,
@@ -208,6 +233,22 @@ private fun DateHeader(today: LocalDate) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/**
+ * Today's line, picked *from the date* rather than at random on every draw.
+ *
+ * Two reasons it is seeded by the day. A fresh pick per recomposition would make the text flicker as
+ * you tick things off, and a fresh pick per launch would make it a slot machine you could reroll —
+ * neither reads as「今天的一句」. Seeding by the epoch day also means nothing has to be stored, and it
+ * survives the process being killed.
+ */
+@Composable
+private fun dailyMotto(today: LocalDate): String {
+    val mottos = stringArrayResource(R.array.daily_mottos)
+    return remember(today, mottos) {
+        if (mottos.isEmpty()) "" else mottos[Random(today.toEpochDay()).nextInt(mottos.size)]
     }
 }
 

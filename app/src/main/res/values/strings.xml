@@ -86,6 +86,23 @@
         <item>S</item>
     </string-array>
 
+    <!--
+      One of these sits beside 今天 on the Dashboard, chosen from the date so it holds still all day
+      and changes tomorrow.
+
+      Written to match the app's voice, which is 「一天挑一到两件就够」 — quiet and true rather than
+      loud. No exclamation marks, nothing that congratulates you for opening an app. A line that
+      shouts gets tiresome by the third morning, and this one is on the screen you open most.
+      English is written for English, not translated from the Chinese.
+    -->
+    <string-array name="daily_mottos">
+        <item>One thing at a time</item>
+        <item>Slow is still forward</item>
+        <item>A little today beats a lot tomorrow</item>
+        <item>You don\'t have to win, just don\'t stop</item>
+        <item>You\'re already on your way</item>
+    </string-array>
+
     <!-- ===== dashboard ===== -->
     <string name="dash_today">Today</string>
     <string name="dash_new_task">New task</string>
