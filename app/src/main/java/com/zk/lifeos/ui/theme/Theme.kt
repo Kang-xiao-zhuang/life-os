@@ -35,8 +35,13 @@ private val LifeOsDarkScheme = darkColorScheme(
     onSurface = DarkOnBackground,
     surfaceVariant = DarkSurfaceVariant,
     onSurfaceVariant = DarkOnSurfaceVariant,
+    // All five container roles are set, not just the two in use: an undefined role silently falls
+    // back to M3's own palette, which is how a white slab once appeared in this dark app.
+    surfaceContainerLowest = DarkBackground,
+    surfaceContainerLow = DarkSurfaceQuiet,
     surfaceContainer = DarkSurface,
     surfaceContainerHigh = DarkSurfaceVariant,
+    surfaceContainerHighest = DarkSurfaceVariant,
     outline = DarkOutline,
     outlineVariant = DarkSurfaceVariant,
 )
@@ -66,8 +71,11 @@ private val LifeOsLightScheme = lightColorScheme(
     onSurface = LightOnBackground,
     surfaceVariant = LightSurfaceVariant,
     onSurfaceVariant = LightOnSurfaceVariant,
+    surfaceContainerLowest = LightSurface,
+    surfaceContainerLow = LightSurfaceQuiet,
     surfaceContainer = LightSurface,
     surfaceContainerHigh = LightSurfaceVariant,
+    surfaceContainerHighest = LightSurfaceVariant,
     outline = LightOutline,
     outlineVariant = LightSurfaceVariant,
 )

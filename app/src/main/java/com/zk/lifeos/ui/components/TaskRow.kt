@@ -1,5 +1,10 @@
 package com.zk.lifeos.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,11 +21,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.zk.lifeos.R
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import com.zk.lifeos.R
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,11 +48,26 @@ fun TaskRow(
     modifier: Modifier = Modifier,
     /** Where the task lives. Shown only outside its own project, where it's ambiguous. */
     projectLabel: String? = null,
+    /** Overridden by the Dashboard hero, which needs its rows to carry the screen's emphasis. */
+    titleStyle: TextStyle? = null,
     onToggle: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     val overdue = task.isOverdue(today)
+
+    // Ticking something off is the most frequent action in the app and it used to happen with no
+    // acknowledgement at all — the glyph just swapped. A short overshoot makes the tap feel landed.
+    val tickScale by animateFloatAsState(
+        targetValue = if (task.done) 1f else 0.9f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "tickScale",
+    )
+    val tickColor by animateColorAsState(
+        targetValue = if (task.done) scheme.secondary else scheme.outline,
+        animationSpec = tween(220),
+        label = "tickColor",
+    )
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -56,14 +79,16 @@ fun TaskRow(
         Icon(
             imageVector = if (task.done) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
             contentDescription = if (task.done) stringResource(R.string.task_mark_undone) else stringResource(R.string.task_mark_done),
-            tint = if (task.done) scheme.secondary else scheme.outline,
+            tint = tickColor,
             modifier = Modifier
                 .clip(CircleShape)
                 .then(if (onToggle != null) Modifier.clickable(onClick = onToggle) else Modifier)
                 // Padding inside the clickable so the touch target is comfortable while the
                 // glyph stays small and quiet.
                 .padding(6.dp)
-                .size(18.dp),
+                .size(18.dp)
+                // Scaled last so the animation can't shrink the touch target.
+                .graphicsLayer { scaleX = tickScale; scaleY = tickScale },
         )
         Spacer(Modifier.width(6.dp))
         Column(
@@ -74,7 +99,7 @@ fun TaskRow(
         ) {
             Text(
                 text = task.title,
-                style = MaterialTheme.typography.bodyMedium,
+                style = titleStyle ?: MaterialTheme.typography.bodyMedium,
                 color = if (task.done) scheme.onSurfaceVariant else scheme.onSurface,
                 textDecoration = if (task.done) TextDecoration.LineThrough else null,
                 maxLines = 2,

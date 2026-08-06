@@ -19,6 +19,7 @@ keystore.properties
 ## IDE
 *.iml
 .idea/
+.vscode/
 
 ## Misc
 .DS_Store

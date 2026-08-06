@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.Color
 
 // ---- dark (primary) ----
 val DarkBackground = Color(0xFF12131A)
+/** One step below [DarkSurface], for cards that should sit behind the screen's main point. */
+val DarkSurfaceQuiet = Color(0xFF15161E)
 val DarkSurface = Color(0xFF171922)
 val DarkSurfaceVariant = Color(0xFF1F2230)
 val DarkOutline = Color(0xFF3A3F52)
@@ -22,6 +24,12 @@ val DarkOnSurfaceVariant = Color(0xFF9EA3B5)
 
 // ---- light (secondary) ----
 val LightBackground = Color(0xFFF7F8FC)
+/**
+ * Quiet cards in light mode. White-on-#F7F8FC is already only a few percent of contrast, so a third
+ * tone can't carry hierarchy here the way it does in the dark palette — this sits *between* the
+ * background and white, and the real distinction comes from type size and padding.
+ */
+val LightSurfaceQuiet = Color(0xFFFBFCFE)
 val LightSurface = Color(0xFFFFFFFF)
 val LightSurfaceVariant = Color(0xFFEDEFF6)
 val LightOutline = Color(0xFFC9CEDD)

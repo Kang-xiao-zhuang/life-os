@@ -2,8 +2,12 @@ package com.zk.lifeos.ui.screen.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -104,11 +109,14 @@ fun DashboardScreen(
     ) {
         DateHeader(state.today)
 
-        MitCard(
+        // The hero: 今日最重要 is not a card. Everything below it is, and is quieter, so the eye
+        // starts on the one thing that has to happen today instead of on five identical slabs.
+        MitHero(
             state = state,
             onToggle = viewModel::toggleTask,
             onEdit = { editor = Editor.Edit(it) },
         )
+
         TodayTasksCard(
             state = state,
             onToggle = viewModel::toggleTask,
@@ -128,6 +136,7 @@ fun DashboardScreen(
             } else {
                 null
             },
+            quiet = true,
             onClick = onOpenCapture,
         ) {
             EmptyHint(stringResource(R.string.dash_capture_hint))
@@ -136,6 +145,7 @@ fun DashboardScreen(
         SectionCard(
             title = stringResource(R.string.dash_journal_title),
             trailing = if (state.journal.isEmpty) stringResource(R.string.journal_not_written) else stringResource(R.string.journal_written),
+            quiet = true,
             onClick = onOpenJournal,
         ) {
             EmptyHint(
@@ -201,37 +211,65 @@ private fun DateHeader(today: LocalDate) {
     }
 }
 
-/** 今日最重要任务 — first, because it is the one thing that must happen today. */
+/**
+ * 今日最重要 — the screen's one point, so it gets the screen's one piece of emphasis.
+ *
+ * No card, on purpose. A card would put it back on the same footing as 快速记录 below, which is what
+ * made Dashboard read as an undifferentiated stack. Here it sits directly on the background under a
+ * small label, at a larger text size, with room around it.
+ */
 @Composable
-private fun MitCard(
+private fun MitHero(
     state: DashboardSnapshot,
     onToggle: (Task) -> Unit,
     onEdit: (Task) -> Unit,
 ) {
     val open = state.mit.count { !it.done }
-    SectionCard(
-        title = stringResource(R.string.task_mit),
-        // Counts what is still to do; finished ones stay listed but shouldn't inflate the number.
-        trailing = when {
-            state.mit.isEmpty() -> null
-            open == 0 -> stringResource(R.string.dash_all_done)
-            else -> itemCount(open)
-        },
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp, bottom = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.task_mit),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.weight(1f),
+            )
+            // Counts what is still to do; finished ones stay listed but shouldn't inflate the number.
+            val trailing = when {
+                state.mit.isEmpty() -> null
+                open == 0 -> stringResource(R.string.dash_all_done)
+                else -> itemCount(open)
+            }
+            if (trailing != null) {
+                Text(
+                    text = trailing,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
         if (state.mit.isEmpty()) {
             EmptyHint(stringResource(R.string.dash_mit_empty))
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 state.mit.forEach { task ->
                     TaskRow(
                         task = task,
                         today = state.today,
+                        titleStyle = MaterialTheme.typography.bodyLarge,
                         onToggle = { onToggle(task) },
                         onClick = { onEdit(task) },
                     )
                 }
             }
         }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
@@ -252,6 +290,7 @@ private fun TodayTasksCard(
             open == 0 -> stringResource(R.string.dash_all_done)
             else -> itemCount(open)
         },
+        quiet = true,
     ) {
         if (state.dueToday.isEmpty()) {
             // MIT tasks are filtered out of this list, so "nothing due" would be a lie when the
@@ -288,7 +327,12 @@ private fun HabitsCard(
 ) {
     SectionCard(
         title = stringResource(R.string.dash_habits_title),
-        trailing = if (state.habits.isEmpty()) null else "${state.habitsCheckedToday} / ${state.habits.size}",
+        trailing = if (state.habits.isEmpty()) {
+            null
+        } else {
+            stringResource(R.string.habit_progress, state.habitsCheckedToday, state.habits.size)
+        },
+        quiet = true,
         onClick = onOpenHabits,
     ) {
         if (state.habits.isEmpty()) {

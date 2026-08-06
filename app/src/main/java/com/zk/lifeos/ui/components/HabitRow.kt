@@ -1,5 +1,10 @@
 package com.zk.lifeos.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,9 +25,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -44,6 +51,18 @@ fun HabitRow(
 ) {
     val scheme = MaterialTheme.colorScheme
 
+    // A once-a-day action deserves to feel like it happened.
+    val checkScale by animateFloatAsState(
+        targetValue = if (habit.checkedToday) 1f else 0.88f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "checkScale",
+    )
+    val checkColor by animateColorAsState(
+        targetValue = if (habit.checkedToday) scheme.secondary else scheme.outline,
+        animationSpec = tween(220),
+        label = "checkColor",
+    )
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -61,8 +80,10 @@ fun HabitRow(
         Icon(
             imageVector = if (habit.checkedToday) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
             contentDescription = null,
-            tint = if (habit.checkedToday) scheme.secondary else scheme.outline,
-            modifier = Modifier.size(18.dp),
+            tint = checkColor,
+            modifier = Modifier
+                .size(18.dp)
+                .graphicsLayer { scaleX = checkScale; scaleY = checkScale },
         )
         Spacer(Modifier.width(12.dp))
         if (habit.emoji.isNotEmpty()) {
@@ -97,13 +118,17 @@ fun WeekDots(week: List<Boolean>, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         week.forEach { done ->
+            // Today's dot fills in as you check in, so the change is visible in two places at once
+            // and the week strip stops looking like a static decoration.
+            val dotColor by animateColorAsState(
+                targetValue = if (done) scheme.secondary else scheme.surfaceVariant,
+                animationSpec = tween(260),
+                label = "weekDot",
+            )
             Box(
                 modifier = Modifier
                     .size(8.dp)
-                    .background(
-                        color = if (done) scheme.secondary else scheme.surfaceVariant,
-                        shape = CircleShape,
-                    )
+                    .background(color = dotColor, shape = CircleShape)
             )
         }
     }

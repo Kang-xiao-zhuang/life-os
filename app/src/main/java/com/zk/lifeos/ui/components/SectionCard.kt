@@ -1,5 +1,12 @@
 package com.zk.lifeos.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,12 +28,18 @@ import androidx.compose.ui.unit.dp
 /**
  * The one card shape the whole app uses: title row, optional trailing text, content below.
  * 卡片式布局 + 留白充足 lives here so no screen re-invents its own padding.
+ *
+ * [quiet] steps a card down a level. Dashboard used to be five cards of identical weight, so the
+ * one that justifies the app (今日最重要) looked exactly like the one that is merely an entrance
+ * (快速记录) — nothing told your eye where to start. The quiet variant is what everything *except*
+ * the screen's main point uses.
  */
 @Composable
 fun SectionCard(
     title: String,
     modifier: Modifier = Modifier,
     trailing: String? = null,
+    quiet: Boolean = false,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit = {},
 ) {
@@ -34,25 +47,52 @@ fun SectionCard(
         modifier = modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(
+            containerColor = if (quiet) {
+                MaterialTheme.colorScheme.surfaceContainerLow
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+        ),
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(if (quiet) 16.dp else 18.dp),
+            verticalArrangement = Arrangement.spacedBy(if (quiet) 10.dp else 12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    // The size step does most of the work; in light mode the surface tones are only
+                    // a few percent apart and can't carry the hierarchy on their own.
+                    style = if (quiet) {
+                        MaterialTheme.typography.titleSmall
+                    } else {
+                        MaterialTheme.typography.titleMedium
+                    },
+                    color = if (quiet) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
                     modifier = Modifier.weight(1f),
                 )
                 if (trailing != null) {
-                    Text(
-                        text = trailing,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    // Animated because these counters change under your finger — ticking a task off
+                    // used to make「3 项」snap to「2 项」with no sense that you'd caused it.
+                    AnimatedContent(
+                        targetState = trailing,
+                        transitionSpec = {
+                            (fadeIn(tween(180)) + slideInVertically { it / 3 }) togetherWith
+                                (fadeOut(tween(120)) + slideOutVertically { -it / 3 })
+                        },
+                        label = "trailing",
+                    ) { value ->
+                        Text(
+                            text = value,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
                 if (onClick != null) {
                     Icon(
