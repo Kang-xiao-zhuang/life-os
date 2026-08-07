@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.AddTask
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,6 +35,7 @@ import com.zk.lifeos.R
 import com.zk.lifeos.model.CaptureItem
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.EmptyHint
+import com.zk.lifeos.ui.components.EmptyState
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.components.noteCount
@@ -94,12 +96,17 @@ fun CaptureScreen(
             }
         }
 
+        // Quiet: the field above is the point of this screen; the inbox is what accumulates from it.
         SectionCard(
             title = stringResource(R.string.capture_inbox),
             trailing = if (inbox.isEmpty()) null else noteCount(inbox.size),
+            quiet = true,
         ) {
             if (inbox.isEmpty()) {
-                EmptyHint(stringResource(R.string.capture_inbox_empty))
+                EmptyState(
+                    icon = Icons.Outlined.Inbox,
+                    text = stringResource(R.string.capture_inbox_empty),
+                )
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     inbox.forEach { item ->

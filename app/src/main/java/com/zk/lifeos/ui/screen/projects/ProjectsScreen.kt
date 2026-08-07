@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -35,6 +36,7 @@ import com.zk.lifeos.model.ProjectSummary
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.ConfirmDialog
 import com.zk.lifeos.ui.components.EmptyHint
+import com.zk.lifeos.ui.components.EmptyState
 import com.zk.lifeos.ui.components.LifeOsFab
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.NameEmojiDialog
@@ -77,9 +79,11 @@ fun ProjectsScreen(
         // First, because「我现在能做什么」is the question you bring to this tab. Without it a task
         // with no due date and no MIT flag is only findable by opening its project.
         if (openTaskCount > 0) {
+            // Quiet: this is a doorway, not the content. The projects below are the content.
             SectionCard(
                 title = stringResource(R.string.projects_all_tasks),
                 trailing = itemCount(openTaskCount),
+                quiet = true,
                 onClick = onOpenAllTasks,
             ) {
                 EmptyHint(stringResource(R.string.projects_all_tasks_hint))
@@ -88,7 +92,10 @@ fun ProjectsScreen(
 
         if (projects.isEmpty()) {
             SectionCard(title = stringResource(R.string.projects_empty_title)) {
-                EmptyHint(stringResource(R.string.projects_empty_hint))
+                EmptyState(
+                    icon = Icons.Outlined.FolderOpen,
+                    text = stringResource(R.string.projects_empty_hint),
+                )
             }
         } else {
             projects.forEach { project ->
@@ -105,6 +112,7 @@ fun ProjectsScreen(
             SectionCard(
                 title = stringResource(R.string.archived_title),
                 trailing = pieceCount(archivedCount),
+                quiet = true,
                 onClick = onOpenArchived,
             ) {
                 EmptyHint(stringResource(R.string.projects_archived_hint))
@@ -115,6 +123,7 @@ fun ProjectsScreen(
             SectionCard(
                 title = stringResource(R.string.label_unassigned),
                 trailing = itemCount(unassigned.size),
+                quiet = true,
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     unassigned.take(8).forEach { task ->

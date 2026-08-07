@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +26,7 @@ import com.zk.lifeos.model.HabitToday
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.ConfirmDialog
 import com.zk.lifeos.ui.components.EmptyHint
+import com.zk.lifeos.ui.components.EmptyState
 import com.zk.lifeos.ui.components.HabitRow
 import com.zk.lifeos.ui.components.LifeOsFab
 import com.zk.lifeos.ui.components.LifeOsScreen
@@ -57,7 +60,10 @@ fun HabitsScreen(
     ) {
         if (habits.isEmpty()) {
             SectionCard(title = stringResource(R.string.habits_empty_title)) {
-                EmptyHint(stringResource(R.string.habits_empty_hint))
+                EmptyState(
+                    icon = Icons.Outlined.LocalFireDepartment,
+                    text = stringResource(R.string.habits_empty_hint),
+                )
             }
         } else {
             SectionCard(
@@ -78,7 +84,8 @@ fun HabitsScreen(
             }
 
             // Neutral title: the card can be paged back to earlier months, so「这个月」would lie.
-            SectionCard(title = stringResource(R.string.habits_month)) {
+            // Quiet: today's check-ins are what you came for; the month is what you look at after.
+            SectionCard(title = stringResource(R.string.habits_month), quiet = true) {
                 HabitHeatmap(
                     month = month,
                     onPreviousMonth = viewModel::showPreviousMonth,
@@ -91,6 +98,7 @@ fun HabitsScreen(
             SectionCard(
                 title = stringResource(R.string.archived_title),
                 trailing = pieceCount(archivedCount),
+                quiet = true,
                 onClick = onOpenArchived,
             ) {
                 EmptyHint(stringResource(R.string.habits_archived_hint))

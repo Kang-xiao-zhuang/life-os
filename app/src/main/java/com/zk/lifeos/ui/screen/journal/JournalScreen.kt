@@ -113,9 +113,11 @@ fun JournalScreen(modifier: Modifier = Modifier) {
         }
 
         if (history.isNotEmpty()) {
+            // Quiet: the editor above is what you opened this tab to do.
             SectionCard(
                 title = stringResource(R.string.journal_history),
                 trailing = entryCount(history.size),
+                quiet = true,
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     history.forEach { entry ->

@@ -143,7 +143,14 @@ fun TaskRow(
             Text(
                 text = dueLabel(task.dueDate, today),
                 style = MaterialTheme.typography.labelSmall,
-                color = if (overdue) scheme.error else scheme.onSurfaceVariant,
+                // Three tones, not red-or-grey. The screen used to be almost colourless, which read
+                // as calm but also meant you had to *read* every date to find the pressing ones.
+                // 逾期 / 今天 / 以后 is the distinction that actually changes what you do next.
+                color = when {
+                    overdue -> scheme.error
+                    task.dueDate == today -> scheme.primary
+                    else -> scheme.onSurfaceVariant
+                },
                 // Same 6dp the title column carries, so the date sits on the title's line rather
                 // than at the very top of a three-line row.
                 modifier = Modifier.padding(start = 8.dp, top = 6.dp),

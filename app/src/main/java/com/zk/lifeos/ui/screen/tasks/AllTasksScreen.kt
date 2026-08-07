@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarDuration
@@ -29,6 +30,7 @@ import com.zk.lifeos.model.Task
 import com.zk.lifeos.model.TaskListItem
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.EmptyHint
+import com.zk.lifeos.ui.components.EmptyState
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.components.TaskEditSheet
@@ -90,7 +92,10 @@ fun AllTasksScreen(
     ) {
         if (tasks.isEmpty()) {
             SectionCard(title = stringResource(R.string.all_tasks_empty_title)) {
-                EmptyHint(stringResource(R.string.all_tasks_empty_hint))
+                EmptyState(
+                    icon = Icons.Outlined.TaskAlt,
+                    text = stringResource(R.string.all_tasks_empty_hint),
+                )
             }
             return@LifeOsScreen
         }
@@ -115,8 +120,15 @@ fun AllTasksScreen(
             }
         }
 
+        // 以后 and 没有日期 go quiet: this screen answers「我现在能做什么」, and those two are
+        // explicitly *not* now. They stay visible — parking something must not hide it — but they
+        // shouldn't compete with the two groups that are actually pressing.
         if (later.isNotEmpty()) {
-            SectionCard(title = stringResource(R.string.all_tasks_later), trailing = itemCount(later.size)) {
+            SectionCard(
+                title = stringResource(R.string.all_tasks_later),
+                trailing = itemCount(later.size),
+                quiet = true,
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     later.forEach { Row(it, today, viewModel) { editing = it.task } }
                 }
@@ -124,7 +136,11 @@ fun AllTasksScreen(
         }
 
         if (undated.isNotEmpty()) {
-            SectionCard(title = stringResource(R.string.all_tasks_undated), trailing = itemCount(undated.size)) {
+            SectionCard(
+                title = stringResource(R.string.all_tasks_undated),
+                trailing = itemCount(undated.size),
+                quiet = true,
+            ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     undated.forEach { Row(it, today, viewModel) { editing = it.task } }
                 }

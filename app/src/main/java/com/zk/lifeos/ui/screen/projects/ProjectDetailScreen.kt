@@ -99,9 +99,11 @@ fun ProjectDetailScreen(
         }
 
         if (done.isNotEmpty()) {
+            // Quiet: what's left to do leads; what's finished is reference.
             SectionCard(
                 title = stringResource(R.string.project_detail_done),
                 trailing = itemCount(done.size),
+                quiet = true,
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     done.take(20).forEach { task ->
