@@ -33,6 +33,25 @@ class TaskRepository(private val taskDao: TaskDao) {
 
     fun observeOpenMitCount(): Flow<Int> = taskDao.observeOpenMitCount()
 
+    /** Titles of the tasks finished on [date], for the review's「今天完成了什么」. */
+    fun observeCompletedOn(date: LocalDate): Flow<List<String>> = taskDao.observeCompletedBetween(
+        dayStart = date.startOfDayMillis(),
+        dayEnd = date.plusDays(1).startOfDayMillis(),
+    )
+
+    /** Tasks finished between [from] and [to] inclusive, grouped by the day they were ticked. */
+    suspend fun completedByDay(from: LocalDate, to: LocalDate): Map<LocalDate, List<String>> =
+        taskDao.findCompletedBetween(
+            from = from.startOfDayMillis(),
+            to = to.plusDays(1).startOfDayMillis(),
+        )
+            .groupBy { it.completedAt.toLocalDateTime().toLocalDate() }
+            .mapValues { (_, rows) -> rows.map { it.title } }
+
+    /** The days on which anything was ever finished. */
+    suspend fun completedDates(): List<LocalDate> =
+        taskDao.findAllCompletedAt().map { it.toLocalDateTime().toLocalDate() }
+
     /**
      * Moves every overdue task to [today] and returns what it moved, so the caller can offer an
      * undo. Reads the rows first and then updates exactly those ids — the undo set can't drift

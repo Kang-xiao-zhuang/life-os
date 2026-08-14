@@ -19,6 +19,14 @@ interface JournalDao {
     @Query("SELECT COUNT(*) FROM journal_entries")
     fun observeCount(): Flow<Int>
 
+    /** Reviews inside a span, oldest first — the export reads a period in the order it happened. */
+    @Query("SELECT * FROM journal_entries WHERE date BETWEEN :from AND :to ORDER BY date ASC")
+    suspend fun findBetween(from: Int, to: Int): List<JournalEntryEntity>
+
+    /** Every date that has a review — for working out which months are worth offering. */
+    @Query("SELECT date FROM journal_entries")
+    suspend fun findAllDates(): List<Int>
+
     /**
      * Deliberately NOT `@Upsert`. Room's upsert falls back to updating by PRIMARY KEY when the
      * insert conflicts — but the conflict here would be on the unique `date` index, so that

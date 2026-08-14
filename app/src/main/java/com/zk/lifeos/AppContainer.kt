@@ -2,6 +2,7 @@ package com.zk.lifeos
 
 import android.content.Context
 import com.zk.lifeos.data.backup.BackupStore
+import com.zk.lifeos.data.backup.TextDocumentStore
 import com.zk.lifeos.data.db.LifeOsDatabase
 import com.zk.lifeos.data.prefs.AppPreferences
 import com.zk.lifeos.data.repository.CaptureRepository
@@ -17,6 +18,7 @@ import com.zk.lifeos.service.CaptureService
 import com.zk.lifeos.service.DashboardService
 import com.zk.lifeos.service.HabitService
 import com.zk.lifeos.service.JournalService
+import com.zk.lifeos.service.MarkdownExportService
 import com.zk.lifeos.service.ProjectService
 import com.zk.lifeos.service.ReminderService
 import com.zk.lifeos.service.SettingsService
@@ -56,6 +58,8 @@ class AppContainer(context: Context) {
     /** Backup needs the database itself (file copy + cross-table transaction), not a single DAO. */
     private val backupStore: BackupStore by lazy { BackupStore(appContext, database) }
 
+    private val textDocumentStore: TextDocumentStore by lazy { TextDocumentStore(appContext) }
+
     // ---- services (what the UI is allowed to talk to) ----
 
     val settingsService: SettingsService by lazy { SettingsService(settingsRepository) }
@@ -75,7 +79,18 @@ class AppContainer(context: Context) {
 
     val habitService: HabitService by lazy { HabitService(habitRepository) }
 
-    val journalService: JournalService by lazy { JournalService(journalRepository) }
+    val journalService: JournalService by lazy {
+        JournalService(
+            journalRepository = journalRepository,
+            // The review reads back what the day already recorded, so it needs these two.
+            taskRepository = taskRepository,
+            habitRepository = habitRepository,
+        )
+    }
+
+    val markdownExportService: MarkdownExportService by lazy {
+        MarkdownExportService(journalService, textDocumentStore)
+    }
 
     val captureService: CaptureService by lazy { CaptureService(captureRepository, taskRepository) }
 

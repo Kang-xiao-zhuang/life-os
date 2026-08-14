@@ -21,6 +21,13 @@ class JournalRepository(private val journalDao: JournalDao) {
     fun observeRecent(limit: Int = 90): Flow<List<JournalEntry>> =
         journalDao.observeRecent(limit).map { list -> list.map { it.toModel() } }
 
+    /** Reviews inside a span, oldest first. */
+    suspend fun findBetween(from: LocalDate, to: LocalDate): List<JournalEntry> =
+        journalDao.findBetween(from.toEpochDayInt(), to.toEpochDayInt()).map { it.toModel() }
+
+    /** Every day that has a review, as dates. */
+    suspend fun allDates(): List<LocalDate> = journalDao.findAllDates().map { it.toLocalDate() }
+
     /**
      * One entry per day. Looked up by date first, then insert or update explicitly — see the
      * note on [JournalDao.findByDate] for why `@Upsert` is not used here.

@@ -93,6 +93,20 @@ class HabitRepository(private val habitDao: HabitDao) {
 
     fun observeArchivedCount(): Flow<Int> = habitDao.observeArchivedCount()
 
+    /** Names of the habits checked on [date], for the review's「今天完成了什么」. */
+    fun observeCheckedOn(date: LocalDate): Flow<List<String>> =
+        habitDao.observeCheckedNames(date.toEpochDayInt())
+
+    /** Habit check-ins between [from] and [to] inclusive, grouped by day. */
+    suspend fun checkedByDay(from: LocalDate, to: LocalDate): Map<LocalDate, List<String>> =
+        habitDao.findCheckedNamesBetween(from.toEpochDayInt(), to.toEpochDayInt())
+            .groupBy { it.date.toLocalDate() }
+            .mapValues { (_, rows) -> rows.map { it.name } }
+
+    /** The days on which anything was ever checked. */
+    suspend fun checkedDates(): List<LocalDate> =
+        habitDao.findAllCheckDates().map { it.toLocalDate() }
+
     /** Deleting a habit also removes its check-ins (foreign key cascade). */
     suspend fun delete(id: Long) = habitDao.delete(id)
 

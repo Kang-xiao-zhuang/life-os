@@ -141,6 +141,7 @@
     <string name="repeat_daily">Daily</string>
     <string name="repeat_weekly">Weekly</string>
     <string name="repeat_monthly">Monthly</string>
+    <string name="repeat_yearly">Yearly</string>
     <string name="task_mit">Most important today</string>
     <string name="task_mit_warning">There are already %1$d most-important things today — if everything is most important, nothing is.</string>
     <string name="task_project">Project</string>
@@ -228,6 +229,8 @@
     <string name="journal_q_problems">What got in the way</string>
     <string name="journal_q_tomorrow">The one thing that matters tomorrow</string>
     <string name="journal_unsaved_hint">Changes aren\'t saved yet.</string>
+    <string name="journal_fill_done">Add the %1$d already ticked off</string>
+    <string name="journal_fill_done_hint">Adds to the box above without replacing anything you wrote.</string>
     <string name="journal_history">Earlier</string>
     <string name="journal_history_hint">Tap an entry to open that day and edit it.</string>
     <string name="journal_choose_day">Another day</string>
@@ -272,6 +275,17 @@
     <string name="settings_data">Data</string>
     <string name="settings_data_hint">A backup is one LifeOS_Backup.zip holding the database, attachments and settings. You choose where it goes; nothing is uploaded.</string>
     <string name="settings_export">Export</string>
+    <string name="settings_export_markdown">Export as Markdown</string>
+    <string name="markdown_pick_title">Which period?</string>
+    <string name="markdown_pick_hint">Plain text you can read anywhere, forever. The backup file is for restoring; this one is for reading.</string>
+    <string name="markdown_range_all">Everything</string>
+    <string name="markdown_range_month">%1$d-%2$02d</string>
+    <string name="markdown_doc_title_all">LifeOS · everything</string>
+    <string name="markdown_doc_title_month">LifeOS · %1$d-%2$02d</string>
+    <string name="markdown_generated_at">Exported %1$s</string>
+    <string name="markdown_ticked">Ticked off</string>
+    <string name="markdown_exported">Exported %1$d days as Markdown.</string>
+    <string name="markdown_nothing">Nothing written in that period yet.</string>
     <string name="settings_import">Import</string>
     <string name="settings_last_backup">Last backup: %1$s</string>
     <string name="settings_never_backed_up">Never backed up. Everything lives on this device only.</string>

@@ -9,11 +9,15 @@ import android.provider.Settings
 import android.text.format.DateFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
@@ -32,6 +36,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -51,6 +57,8 @@ import com.zk.lifeos.R
 import com.zk.lifeos.model.AppLanguage
 import com.zk.lifeos.model.BackupCounts
 import com.zk.lifeos.model.BackupFailure
+import com.zk.lifeos.model.ExportLabels
+import com.zk.lifeos.model.ExportRange
 import com.zk.lifeos.model.ReminderKind
 import com.zk.lifeos.model.ReminderSettings
 import com.zk.lifeos.model.ThemeMode
@@ -99,6 +107,28 @@ fun SettingsScreen(
         ActivityResultContracts.OpenDocument()
     ) { uri -> uri?.let(viewModel::import) }
 
+    val exportRanges by viewModel.exportRanges.collectAsStateWithLifecycle()
+    var pickingRange by remember { mutableStateOf(false) }
+    // Which period the user chose, held across the trip to the file picker.
+    var chosenRange by remember { mutableStateOf<ExportRange?>(null) }
+    // Recomposed as soon as a period is picked, and the launcher below always calls the newest
+    // callback (`rememberLauncherForActivityResult` keeps it updated), so by the time the picker
+    // comes back these labels already describe the chosen period.
+    val labels = exportLabels(chosenRange)
+
+    // What can be exported changes as reviews get written, not while this screen is open.
+    LaunchedEffect(Unit) { viewModel.refreshExportRanges() }
+
+    val markdownLauncher = rememberLauncherForActivityResult(
+        // NOT text/plain: the system picker appends the extension it associates with the MIME type,
+        // so text/plain silently saved 「LifeOS_all.md.txt」. text/markdown has no mapping, which is
+        // what leaves the .md in the suggested name alone.
+        ActivityResultContracts.CreateDocument("text/markdown")
+    ) { uri ->
+        val range = chosenRange
+        if (uri != null && range != null) viewModel.exportMarkdown(uri, range, labels)
+    }
+
     LifeOsScreen(
         title = stringResource(R.string.nav_settings),
         modifier = modifier,
@@ -127,6 +157,14 @@ fun SettingsScreen(
                         onClick = { confirmImport = true },
                         enabled = !busy,
                     ) { Text(stringResource(R.string.settings_import)) }
+                    // Hidden until there is something to write out — the first week of using the
+                    // app would otherwise offer a button that can only produce an empty file.
+                    if (exportRanges.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = { pickingRange = true },
+                            enabled = !busy,
+                        ) { Text(stringResource(R.string.settings_export_markdown)) }
+                    }
                     if (busy) {
                         CircularProgressIndicator(
                             modifier = Modifier
@@ -176,6 +214,117 @@ fun SettingsScreen(
             },
         )
     }
+
+    if (pickingRange) {
+        ExportRangeDialog(
+            ranges = exportRanges,
+            onDismiss = { pickingRange = false },
+            onPick = { range ->
+                pickingRange = false
+                chosenRange = range
+                markdownLauncher.launch(viewModel.markdownFileName(range))
+            },
+        )
+    }
+}
+
+/**
+ * Which period to write out.
+ *
+ * Only periods that hold something are listed, so every row produces a file worth opening. 全部
+ * comes first: it is the one you want when the point is「换个工具」or「存起来」, and the months below
+ * it are for reading a single period back.
+ */
+@Composable
+private fun ExportRangeDialog(
+    ranges: List<ExportRange>,
+    onDismiss: () -> Unit,
+    onPick: (ExportRange) -> Unit,
+) {
+    // Every string is resolved out here, in the app's own composition. A Dialog is a separate
+    // subcomposition that refills `LocalContext` from its own window, so a `stringResource` called
+    // inside one of the slots below would come back in the *phone's* language — which is exactly
+    // what this dialog did on first run. Bounded at MONTHS_OFFERED too: a workbench that has been
+    // going for years would otherwise put a scroll of months in here, and 全部 already covers older.
+    val title = stringResource(R.string.markdown_pick_title)
+    val hint = stringResource(R.string.markdown_pick_hint)
+    val cancel = stringResource(R.string.action_cancel)
+    val choices = ranges.take(1 + MONTHS_OFFERED).map { it to rangeLabel(it) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column {
+                EmptyHint(hint)
+                Spacer(Modifier.size(8.dp))
+                choices.forEach { (range, label) ->
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { onPick(range) }
+                            .padding(vertical = 12.dp),
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(cancel) }
+        },
+    )
+}
+
+private const val MONTHS_OFFERED = 12
+
+@Composable
+private fun rangeLabel(range: ExportRange): String = when (range) {
+    is ExportRange.All -> stringResource(R.string.markdown_range_all)
+    is ExportRange.Month -> stringResource(
+        R.string.markdown_range_month,
+        range.month.year,
+        range.month.monthValue,
+    )
+}
+
+/**
+ * Every fixed word in the exported document, read here because this is the layer that has
+ * resources. The file therefore comes out in the language the app is set to right now.
+ */
+@Composable
+private fun exportLabels(range: ExportRange?): ExportLabels {
+    val title = when (range) {
+        null, is ExportRange.All -> stringResource(R.string.markdown_doc_title_all)
+        is ExportRange.Month -> stringResource(
+            R.string.markdown_doc_title_month,
+            range.month.year,
+            range.month.monthValue,
+        )
+    }
+    val locale = currentLocale()
+    return ExportLabels(
+        documentTitle = title,
+        generatedAt = stringResource(R.string.markdown_generated_at, LocalDate.now().toString()),
+        // ISO date rather than the app's「8 月 13 日」: this heading gets sorted, grepped and read
+        // by tools that were never told which locale wrote the file. The weekday follows in the
+        // app's language because that part is for a person.
+        dateHeading = { date ->
+            "%d-%02d-%02d %s".format(
+                date.year,
+                date.monthValue,
+                date.dayOfMonth,
+                date.dayOfWeek.getDisplayName(TextStyle.FULL, locale),
+            )
+        },
+        done = stringResource(R.string.journal_q_done),
+        win = stringResource(R.string.journal_q_win),
+        problems = stringResource(R.string.journal_q_problems),
+        tomorrow = stringResource(R.string.journal_q_tomorrow),
+        ticked = stringResource(R.string.markdown_ticked),
+    )
 }
 
 /**
@@ -224,6 +373,8 @@ private fun relativeDay(instant: Instant): String {
 private fun statusText(status: BackupStatus): String = when (status) {
     is BackupStatus.Exported -> stringResource(R.string.backup_exported, summary(status.counts))
     is BackupStatus.Restored -> stringResource(R.string.backup_restored, summary(status.counts))
+    is BackupStatus.MarkdownExported -> stringResource(R.string.markdown_exported, status.days)
+    BackupStatus.NothingToExport -> stringResource(R.string.markdown_nothing)
     is BackupStatus.Failed -> when (val failure = status.failure) {
         BackupFailure.CannotWrite -> stringResource(R.string.backup_error_cannot_write)
         BackupFailure.CannotRead -> stringResource(R.string.backup_error_cannot_read)

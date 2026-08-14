@@ -66,6 +66,7 @@ fun JournalScreen(modifier: Modifier = Modifier) {
     val dirty by viewModel.dirty.collectAsStateWithLifecycle()
     val recent by viewModel.recent.collectAsStateWithLifecycle()
     val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
+    val completions by viewModel.completions.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
 
     val today = LocalDate.now()
@@ -96,6 +97,14 @@ fun JournalScreen(modifier: Modifier = Modifier) {
                 }
 
                 Field(stringResource(R.string.journal_q_done), draft.done, viewModel::setDone)
+                // Only offered when there is actually something to bring over — an empty day
+                // shouldn't advertise a button that would do nothing.
+                if (!completions.isEmpty) {
+                    FillInCompleted(
+                        count = completions.count,
+                        onClick = viewModel::fillInCompleted,
+                    )
+                }
                 Field(stringResource(R.string.journal_q_win), draft.win, viewModel::setWin)
                 Field(stringResource(R.string.journal_q_problems), draft.problems, viewModel::setProblems)
                 Field(stringResource(R.string.journal_q_tomorrow), draft.tomorrowMit, viewModel::setTomorrowMit)
@@ -138,6 +147,24 @@ fun JournalScreen(modifier: Modifier = Modifier) {
                 viewModel.selectDate(date)
             },
         )
+    }
+}
+
+/**
+ * 「带出已经打过勾的 N 项」— the app filling in the one prompt it can actually answer.
+ *
+ * Sits under 今天完成了什么 rather than above it: the box is the thing, this is an offer. The hint
+ * spells out that it appends, because a button that rewrites a box you already typed in is exactly
+ * the kind of surprise this app doesn't allow.
+ */
+@Composable
+private fun FillInCompleted(count: Int, onClick: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        AssistChip(
+            onClick = onClick,
+            label = { Text(stringResource(R.string.journal_fill_done, count)) },
+        )
+        EmptyHint(stringResource(R.string.journal_fill_done_hint))
     }
 }
 

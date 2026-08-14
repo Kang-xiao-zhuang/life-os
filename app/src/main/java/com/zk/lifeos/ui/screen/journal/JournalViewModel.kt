@@ -2,6 +2,7 @@ package com.zk.lifeos.ui.screen.journal
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zk.lifeos.model.DayCompletions
 import com.zk.lifeos.model.JournalEntry
 import com.zk.lifeos.service.JournalService
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,6 +42,11 @@ class JournalViewModel(private val journalService: JournalService) : ViewModel()
     val recent: StateFlow<List<JournalEntry>> = journalService.observeRecent()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** What the app already knows was finished on the day being edited. */
+    val completions: StateFlow<DayCompletions> = _selectedDate
+        .flatMapLatest { date -> journalService.observeCompletions(date) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DayCompletions())
+
     init {
         viewModelScope.launch {
             _selectedDate
@@ -61,6 +67,27 @@ class JournalViewModel(private val journalService: JournalService) : ViewModel()
     private inline fun edit(transform: (JournalEntry) -> JournalEntry) {
         _draft.update(transform)
         _dirty.value = true
+    }
+
+    /**
+     * Drop what the day already recorded into 今天完成了什么.
+     *
+     * **Appends, never replaces** — the app's standing rule is that nothing destroys text the user
+     * typed, and this button sits directly beside a box they may have already written in. Lines
+     * that are already there are skipped, so pressing it twice, or pressing it after writing 「跑步」
+     * by hand, doesn't produce a duplicate.
+     *
+     * Nothing is saved here: the result lands in the draft as an ordinary edit, so it can be
+     * reworded or undone by 撤销 before it ever reaches the database.
+     */
+    fun fillInCompleted() {
+        val date = _selectedDate.value
+        val lines = completions.value.lines
+        if (lines.isEmpty()) return
+        // Guard against the day having changed between the tap and here — the same reason the
+        // database collector checks it.
+        if (_draft.value.date != date) return
+        edit { entry -> entry.copy(done = appendMissingLines(entry.done, lines)) }
     }
 
     fun save() {
@@ -95,4 +122,33 @@ class JournalViewModel(private val journalService: JournalService) : ViewModel()
     fun previousDay() = selectDate(_selectedDate.value.minusDays(1))
 
     fun nextDay() = selectDate(_selectedDate.value.plusDays(1))
+}
+
+/** The Markdown bullet the review is written in. */
+private const val BULLET = "- "
+
+/**
+ * [existing] plus every line of [lines] not already in it, as Markdown bullets.
+ *
+ * "Already in it" is judged on the text of the line with any bullet and surrounding space removed,
+ * so a task typed by hand as 「跑步」 blocks the generated 「- 跑步」. Comparison is deliberately exact
+ * beyond that: two tasks whose titles differ by a word are two different things, and guessing at
+ * near-matches would silently drop something the user did.
+ */
+internal fun appendMissingLines(existing: String, lines: List<String>): String {
+    val present = existing.lines()
+        .map { it.trim().removePrefix(BULLET).trim() }
+        .filter { it.isNotEmpty() }
+        .toSet()
+
+    val fresh = lines.filter { it.trim() !in present }.distinct()
+    if (fresh.isEmpty()) return existing
+
+    val addition = fresh.joinToString("\n") { BULLET + it }
+    return when {
+        existing.isBlank() -> addition
+        // One blank line short of a paragraph break: the user's own text stays visibly theirs.
+        existing.endsWith("\n") -> existing + addition
+        else -> "$existing\n$addition"
+    }
 }

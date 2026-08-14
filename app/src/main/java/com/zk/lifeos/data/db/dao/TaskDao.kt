@@ -57,6 +57,37 @@ interface TaskDao {
     suspend fun findById(id: Long): TaskEntity?
 
     /**
+     * The titles of everything ticked off inside one day, in the order it was ticked.
+     *
+     * Backs the evening review's「把今天完成的带过来」: the app already knows what got done, so the
+     * 今天完成了什么 prompt should not be a blank box. Bounded at both ends rather than just
+     * `completedAt >= dayStart`, because the same question gets asked about *past* days when a
+     * review is written late.
+     */
+    @Query(
+        """
+        SELECT title FROM tasks
+        WHERE done = 1 AND completedAt >= :dayStart AND completedAt < :dayEnd
+        ORDER BY completedAt ASC, id ASC
+        """
+    )
+    fun observeCompletedBetween(dayStart: Long, dayEnd: Long): Flow<List<String>>
+
+    /** The same rows over a longer span, carrying the timestamp so the export can group by day. */
+    @Query(
+        """
+        SELECT title, completedAt FROM tasks
+        WHERE done = 1 AND completedAt >= :from AND completedAt < :to
+        ORDER BY completedAt ASC, id ASC
+        """
+    )
+    suspend fun findCompletedBetween(from: Long, to: Long): List<CompletedTaskRow>
+
+    /** Every completion timestamp there is — enough to work out which months have anything in them. */
+    @Query("SELECT completedAt FROM tasks WHERE done = 1 AND completedAt IS NOT NULL")
+    suspend fun findAllCompletedAt(): List<Long>
+
+    /**
      * Every open task with the name of the project it belongs to.
      *
      * Backs the 「所有待办」 view: without it a task that has neither a due date nor the MIT flag is

@@ -49,6 +49,39 @@ interface HabitDao {
     )
     fun observeDailyCounts(from: Int, to: Int): Flow<List<DayCheckCount>>
 
+    /**
+     * The names of the habits checked on [date] (epoch day) — the other half of what the evening
+     * review means by「今天完成了什么」.
+     *
+     * Archived habits are **included** here, unlike everywhere else. This answers "what did you do
+     * on that day", and a habit you kept in July and retired in August was still kept in July;
+     * filtering it out would quietly rewrite the record of a day that already happened.
+     */
+    @Query(
+        """
+        SELECT habits.name FROM habit_checks
+        JOIN habits ON habits.id = habit_checks.habitId
+        WHERE habit_checks.date = :date
+        ORDER BY habits.sortOrder ASC, habits.id ASC
+        """
+    )
+    fun observeCheckedNames(date: Int): Flow<List<String>>
+
+    /** The same, over a span and carrying the day, so the export can group by date. */
+    @Query(
+        """
+        SELECT habit_checks.date AS date, habits.name AS name FROM habit_checks
+        JOIN habits ON habits.id = habit_checks.habitId
+        WHERE habit_checks.date BETWEEN :from AND :to
+        ORDER BY habit_checks.date ASC, habits.sortOrder ASC, habits.id ASC
+        """
+    )
+    suspend fun findCheckedNamesBetween(from: Int, to: Int): List<DayHabitName>
+
+    /** Every date that has any check-in — for working out which months are worth offering. */
+    @Query("SELECT DISTINCT date FROM habit_checks")
+    suspend fun findAllCheckDates(): List<Int>
+
     @Insert
     suspend fun insert(habit: HabitEntity): Long
 

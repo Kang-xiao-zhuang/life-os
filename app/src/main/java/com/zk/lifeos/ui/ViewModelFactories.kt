@@ -48,6 +48,7 @@ object LifeOsViewModelFactory {
             SettingsViewModel(
                 container.settingsService,
                 container.backupService,
+                container.markdownExportService,
                 container.reminderService,
             )
         }

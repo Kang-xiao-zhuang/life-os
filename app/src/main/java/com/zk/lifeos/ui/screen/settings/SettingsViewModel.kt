@@ -7,9 +7,13 @@ import com.zk.lifeos.model.AppLanguage
 import com.zk.lifeos.model.BackupCounts
 import com.zk.lifeos.model.BackupFailure
 import com.zk.lifeos.model.BackupResult
+import com.zk.lifeos.model.ExportLabels
+import com.zk.lifeos.model.ExportRange
 import com.zk.lifeos.model.ReminderSettings
 import com.zk.lifeos.model.ThemeMode
 import com.zk.lifeos.service.BackupService
+import com.zk.lifeos.service.MarkdownExportResult
+import com.zk.lifeos.service.MarkdownExportService
 import com.zk.lifeos.service.ReminderService
 import com.zk.lifeos.service.SettingsService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +34,10 @@ import java.time.LocalTime
 sealed interface BackupStatus {
     data class Exported(val counts: BackupCounts) : BackupStatus
     data class Restored(val counts: BackupCounts) : BackupStatus
+    data class MarkdownExported(val days: Int) : BackupStatus
+
+    /** The chosen period turned out to hold nothing. Says so instead of writing an empty file. */
+    data object NothingToExport : BackupStatus
     data class Failed(val failure: BackupFailure) : BackupStatus
 
     val isError: Boolean get() = this is Failed
@@ -38,6 +46,7 @@ sealed interface BackupStatus {
 class SettingsViewModel(
     private val settingsService: SettingsService,
     private val backupService: BackupService,
+    private val markdownExportService: MarkdownExportService,
     private val reminderService: ReminderService,
 ) : ViewModel() {
 
@@ -77,6 +86,51 @@ class SettingsViewModel(
     }
 
     fun suggestedFileName(): String = backupService.suggestedFileName()
+
+    /**
+     * The periods worth exporting, newest first, with「全部」in front when there is more than
+     * nothing. Reloaded whenever Settings is opened rather than observed: it changes when you write
+     * a review, not while you sit on this screen.
+     */
+    private val _exportRanges = MutableStateFlow<List<ExportRange>>(emptyList())
+    val exportRanges: StateFlow<List<ExportRange>> = _exportRanges.asStateFlow()
+
+    fun refreshExportRanges() {
+        viewModelScope.launch {
+            val months = markdownExportService.exportableMonths()
+            _exportRanges.value = if (months.isEmpty()) {
+                emptyList()
+            } else {
+                // months arrive newest first, so the span runs from the last one to the first.
+                listOf(
+                    ExportRange.All(
+                        from = months.last().atDay(1),
+                        to = months.first().atEndOfMonth(),
+                    )
+                ) + months.map { ExportRange.Month(it) }
+            }
+        }
+    }
+
+    /** ASCII on purpose — a file name is not UI text, and it travels to other machines. */
+    fun markdownFileName(range: ExportRange): String = when (range) {
+        is ExportRange.All -> "LifeOS_all.md"
+        is ExportRange.Month -> "LifeOS_%d-%02d.md".format(range.month.year, range.month.monthValue)
+    }
+
+    fun exportMarkdown(target: Uri, range: ExportRange, labels: ExportLabels) {
+        if (_busy.value) return
+        viewModelScope.launch {
+            _busy.value = true
+            _status.value = null
+            _status.value = when (val result = markdownExportService.export(target, range, labels)) {
+                is MarkdownExportResult.Success -> BackupStatus.MarkdownExported(result.days)
+                is MarkdownExportResult.Nothing -> BackupStatus.NothingToExport
+                is MarkdownExportResult.Failure -> BackupStatus.Failed(result.failure)
+            }
+            _busy.value = false
+        }
+    }
 
     fun export(target: Uri) = run(
         action = { backupService.export(target) },
