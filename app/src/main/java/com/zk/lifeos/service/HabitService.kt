@@ -11,7 +11,17 @@ import java.time.YearMonth
 /** 习惯 + 每日打卡. */
 class HabitService(private val habitRepository: HabitRepository) {
 
-    fun observeToday(): Flow<List<HabitToday>> = habitRepository.observeToday(LocalDate.now())
+    /**
+     * [today] is a parameter, not a `LocalDate.now()` read in here.
+     *
+     * It used to be read here, which fixed「今天」at the moment the flow was built. The screen then
+     * disagreed with [toggleToday], which reads the clock when you tap: past midnight the list still
+     * showed yesterday's check as「今天打过了」, and tapping it — which the UI offers as *un*-checking
+     * — wrote a brand new check-in for the day you hadn't done anything on yet.
+     * Same defect [DashboardService] had, and the same fix.
+     */
+    fun observeToday(today: LocalDate = LocalDate.now()): Flow<List<HabitToday>> =
+        habitRepository.observeToday(today)
 
     /** One month of check-ins for the heatmap — 「这个月坚持得怎么样」. */
     fun observeMonth(month: YearMonth): Flow<HabitMonth> = habitRepository.observeMonth(month)

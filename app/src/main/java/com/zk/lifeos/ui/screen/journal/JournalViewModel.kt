@@ -39,6 +39,9 @@ class JournalViewModel(private val journalService: JournalService) : ViewModel()
     private val _dirty = MutableStateFlow(false)
     val dirty: StateFlow<Boolean> = _dirty.asStateFlow()
 
+    /** True once the user has navigated to a day of their own choosing. See [refreshToday]. */
+    private var pinnedByUser = false
+
     val recent: StateFlow<List<JournalEntry>> = journalService.observeRecent()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -107,6 +110,8 @@ class JournalViewModel(private val journalService: JournalService) : ViewModel()
      */
     fun selectDate(date: LocalDate) {
         if (date == _selectedDate.value || date.isAfter(LocalDate.now())) return
+        // Anything other than today is a day the user asked for; [refreshToday] must leave it alone.
+        pinnedByUser = date != LocalDate.now()
         viewModelScope.launch {
             if (_dirty.value) journalService.save(_draft.value)
             _dirty.value = false
@@ -118,6 +123,24 @@ class JournalViewModel(private val journalService: JournalService) : ViewModel()
     }
 
     fun selectToday() = selectDate(LocalDate.now())
+
+    /**
+     * Follow the clock over midnight, for a resident app that was left on this screen.
+     *
+     * Two guards, and both are the point:
+     *
+     * - **Only while the editor is still on「今天」.** Someone who deliberately opened the 11th must
+     *   stay on the 11th; that is navigation they performed, not a stale default.
+     * - **Never while there is unsaved text.** At 00:05 you are writing about the evening that just
+     *   ended, and yanking the editor to a blank new day mid-sentence — even though [selectDate]
+     *   would save first — is exactly the kind of thing this app doesn't do to typed text. It
+     *   catches up the next time the screen resumes with nothing pending.
+     */
+    fun refreshToday() {
+        if (pinnedByUser || _dirty.value) return
+        val now = LocalDate.now()
+        if (_selectedDate.value != now) selectDate(now)
+    }
 
     fun previousDay() = selectDate(_selectedDate.value.minusDays(1))
 

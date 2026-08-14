@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zk.lifeos.R
@@ -48,6 +49,13 @@ fun HabitsScreen(
     val month by viewModel.month.collectAsStateWithLifecycle()
     val archivedCount by viewModel.archivedCount.collectAsStateWithLifecycle()
     val checkedToday = habits.count { it.checkedToday }
+
+    // Coming back to a resident app after midnight must not leave 今天 pointing at yesterday —
+    // here that mismatch made a tap record a check-in for a day nothing had been done on.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshToday()
+        onPauseOrDispose {}
+    }
 
     var creating by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<HabitToday?>(null) }

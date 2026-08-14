@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zk.lifeos.R
@@ -68,6 +69,14 @@ fun JournalScreen(modifier: Modifier = Modifier) {
     val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
     val completions by viewModel.completions.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
+
+    // A review screen left open past midnight was still pointed at yesterday, so the evening's
+    // writing would have been filed under the wrong day. Only moves when nothing is pending and the
+    // user hasn't picked a day themselves — see JournalViewModel.refreshToday.
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshToday()
+        onPauseOrDispose {}
+    }
 
     val today = LocalDate.now()
     val isToday = selectedDate == today

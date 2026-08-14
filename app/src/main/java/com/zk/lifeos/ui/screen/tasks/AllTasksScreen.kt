@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zk.lifeos.R
@@ -57,7 +58,14 @@ fun AllTasksScreen(
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
     val mitCount by viewModel.mitCount.collectAsStateWithLifecycle()
     val projects by viewModel.projects.collectAsStateWithLifecycle()
-    val today = remember { LocalDate.now() }
+    // `remember { LocalDate.now() }` froze this at whatever day the screen was first composed, so a
+    // resident app showed 今天到期 and 已经逾期 for yesterday — on the one screen whose whole job is
+    // 「我现在能做什么」. Re-read on resume instead.
+    var today by remember { mutableStateOf(LocalDate.now()) }
+    LifecycleResumeEffect(Unit) {
+        today = LocalDate.now()
+        onPauseOrDispose {}
+    }
     var editing by remember { mutableStateOf<Task?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
