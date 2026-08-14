@@ -206,6 +206,8 @@
     <string name="journal_unsaved_hint">改动还没保存。</string>
     <string name="journal_fill_done">带出已经打过勾的 %1$d 项</string>
     <string name="journal_fill_done_hint">加在上面那格后面,不会覆盖你写的。</string>
+    <string name="journal_mode_read">阅读</string>
+    <string name="journal_mode_edit">编辑</string>
     <string name="journal_history">以前</string>
     <string name="journal_history_hint">点一条就能打开那天,接着改。</string>
     <string name="journal_choose_day">换一天</string>

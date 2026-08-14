@@ -231,6 +231,8 @@
     <string name="journal_unsaved_hint">Changes aren\'t saved yet.</string>
     <string name="journal_fill_done">Add the %1$d already ticked off</string>
     <string name="journal_fill_done_hint">Adds to the box above without replacing anything you wrote.</string>
+    <string name="journal_mode_read">Read</string>
+    <string name="journal_mode_edit">Edit</string>
     <string name="journal_history">Earlier</string>
     <string name="journal_history_hint">Tap an entry to open that day and edit it.</string>
     <string name="journal_choose_day">Another day</string>

@@ -32,6 +32,7 @@ import com.zk.lifeos.R
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.zk.lifeos.model.Markdown
 import com.zk.lifeos.model.Task
 import java.time.LocalDate
 
@@ -110,9 +111,10 @@ fun TaskRow(
             // and it stays out of the way on finished tasks, where it is no longer a reminder.
             if (task.notes.isNotBlank() && !task.done) {
                 Text(
-                    // Flattened: with maxLines = 1, a note that starts with a blank line would
-                    // otherwise render as an empty row.
-                    text = task.notes.replace('\n', ' ').trim(),
+                    // Flattened, and Markdown markers stripped: with maxLines = 1 a note starting
+                    // with a blank line would render as an empty row, and 「**记得**带充电器」would
+                    // show its asterisks. One line has no room to be formatted anyway.
+                    text = Markdown.toPlainText(task.notes),
                     style = MaterialTheme.typography.bodySmall,
                     color = scheme.onSurfaceVariant,
                     maxLines = 1,

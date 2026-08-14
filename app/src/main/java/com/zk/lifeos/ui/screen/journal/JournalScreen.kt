@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,10 +41,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zk.lifeos.R
 import com.zk.lifeos.model.JournalEntry
+import com.zk.lifeos.model.Markdown
 import com.zk.lifeos.ui.LifeOsOverlayLocalization
 import com.zk.lifeos.ui.LifeOsViewModelFactory
 import com.zk.lifeos.ui.components.EmptyHint
 import com.zk.lifeos.ui.components.LifeOsScreen
+import com.zk.lifeos.ui.components.MarkdownText
 import com.zk.lifeos.ui.components.SectionCard
 import com.zk.lifeos.ui.components.entryCount
 import com.zk.lifeos.ui.currentLocale
@@ -69,6 +73,8 @@ fun JournalScreen(modifier: Modifier = Modifier) {
     val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
     val completions by viewModel.completions.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
+    // Survives the light/dark switch and rotation, like the day tab does.
+    var reading by rememberSaveable { mutableStateOf(false) }
 
     // A review screen left open past midnight was still pointed at yesterday, so the evening's
     // writing would have been filed under the wrong day. Only moves when nothing is pending and the
@@ -99,30 +105,43 @@ fun JournalScreen(modifier: Modifier = Modifier) {
                     onNext = viewModel::nextDay,
                     onToday = viewModel::selectToday,
                     onPick = { showDatePicker = true },
+                    // Nothing written yet means nothing to read; the toggle would only ever show a
+                    // blank page.
+                    canRead = !draft.isEmpty,
+                    reading = reading,
+                    onToggleRead = { reading = !reading },
                 )
 
                 if (!isToday) {
                     EmptyHint(stringResource(R.string.journal_editing_past))
                 }
 
-                Field(stringResource(R.string.journal_q_done), draft.done, viewModel::setDone)
-                // Only offered when there is actually something to bring over — an empty day
-                // shouldn't advertise a button that would do nothing.
-                if (!completions.isEmpty) {
-                    FillInCompleted(
-                        count = completions.count,
-                        onClick = viewModel::fillInCompleted,
-                    )
+                if (reading) {
+                    ReadView(draft)
+                } else {
+                    Field(stringResource(R.string.journal_q_done), draft.done, viewModel::setDone)
+                    // Only offered when there is actually something to bring over — an empty day
+                    // shouldn't advertise a button that would do nothing.
+                    if (!completions.isEmpty) {
+                        FillInCompleted(
+                            count = completions.count,
+                            onClick = viewModel::fillInCompleted,
+                        )
+                    }
+                    Field(stringResource(R.string.journal_q_win), draft.win, viewModel::setWin)
+                    Field(stringResource(R.string.journal_q_problems), draft.problems, viewModel::setProblems)
+                    Field(stringResource(R.string.journal_q_tomorrow), draft.tomorrowMit, viewModel::setTomorrowMit)
                 }
-                Field(stringResource(R.string.journal_q_win), draft.win, viewModel::setWin)
-                Field(stringResource(R.string.journal_q_problems), draft.problems, viewModel::setProblems)
-                Field(stringResource(R.string.journal_q_tomorrow), draft.tomorrowMit, viewModel::setTomorrowMit)
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Button(onClick = viewModel::save, enabled = dirty) { Text(stringResource(R.string.action_save)) }
+                // Kept in both modes: switching to 阅读 with unsaved text must not strand it behind
+                // a button that is no longer on screen.
+                if (!reading || dirty) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Button(onClick = viewModel::save, enabled = dirty) { Text(stringResource(R.string.action_save)) }
+                    }
                 }
                 if (dirty) {
                     EmptyHint(stringResource(R.string.journal_unsaved_hint))
@@ -189,6 +208,9 @@ private fun DayPicker(
     onNext: () -> Unit,
     onToday: () -> Unit,
     onPick: () -> Unit,
+    canRead: Boolean,
+    reading: Boolean,
+    onToggleRead: () -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -210,6 +232,46 @@ private fun DayPicker(
         if (!isToday) {
             TextButton(onClick = onToday) { Text(stringResource(R.string.journal_back_to_today)) }
         }
+        if (canRead) {
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = onToggleRead) {
+                Text(
+                    stringResource(
+                        if (reading) R.string.journal_mode_edit else R.string.journal_mode_read
+                    )
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The review as written, with its Markdown actually rendered.
+ *
+ * Empty prompts are skipped rather than shown with nothing under them — the same rule the Markdown
+ * export follows. Reading and writing stay on one screen, deliberately: an earlier version had a
+ * separate read-only sheet and it was deleted for being a second place to look at the same day.
+ */
+@Composable
+private fun ReadView(entry: JournalEntry) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        ReadSection(stringResource(R.string.journal_q_done), entry.done)
+        ReadSection(stringResource(R.string.journal_q_win), entry.win)
+        ReadSection(stringResource(R.string.journal_q_problems), entry.problems)
+        ReadSection(stringResource(R.string.journal_q_tomorrow), entry.tomorrowMit)
+    }
+}
+
+@Composable
+private fun ReadSection(label: String, body: String) {
+    if (body.isBlank()) return
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.outline,
+        )
+        MarkdownText(source = body)
     }
 }
 
@@ -278,7 +340,12 @@ private fun HistoryRow(entry: JournalEntry, onClick: () -> Unit) {
             color = MaterialTheme.colorScheme.primary,
         )
         Text(
-            text = entry.win.ifBlank { entry.done }.ifBlank { entry.problems },
+            // Markers stripped rather than rendered: this is a two-line summary, and a stray「-」or
+            // 「**」here is noise. Since 「带出已经打过勾的」 fills that field with bullets, without this
+            // the preview read literally「- 写周报 - 阅读」.
+            text = Markdown.toPlainText(
+                entry.win.ifBlank { entry.done }.ifBlank { entry.problems }
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 2,
