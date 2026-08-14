@@ -48,16 +48,38 @@ private fun cjk(
     lineHeightStyle = CjkLineHeightStyle,
 )
 
+/**
+ * The scale had almost no contrast, and counting the call sites showed exactly how little:
+ * **nine of the eleven styles sat between 11sp and 16sp**, the most-used style in the whole app was
+ * the *smallest* one (`labelSmall`, 18 call sites at 11sp), `headlineMedium` appeared exactly once,
+ * and `headlineSmall` / `titleLarge` were never used at all. `headlineSmall` 21 and `titleLarge` 20
+ * were also a step apart on paper and indistinguishable on screen.
+ *
+ * So most of the interface was rendered at one of three nearly identical sizes in one muted colour —
+ * an even grey texture with nothing leading it. The sizes below are spread so that the ones actually
+ * on screen at once are clearly different: **30 / 24 / 17 / 15 / 14 / 13 / 12**.
+ *
+ * `headlineSmall` now has a job (every screen's title, via `LifeOsScreen`), which is what gives each
+ * screen an anchor instead of opening straight into a stack of same-sized cards.
+ *
+ * Nothing here got smaller except the near-duplicates: `labelSmall` 11 → 12 and `bodySmall` 12 → 13,
+ * because both carry real content (dates, notes, coaching lines) and 11sp is genuinely small for 汉字.
+ */
 val LifeOsTypography = Typography(
-    headlineMedium = cjk(fontSize = 26, lineHeight = 36, weight = FontWeight.SemiBold),
-    headlineSmall = cjk(fontSize = 21, lineHeight = 30, weight = FontWeight.SemiBold),
-    titleLarge = cjk(fontSize = 20, lineHeight = 28, weight = FontWeight.SemiBold),
-    titleMedium = cjk(fontSize = 16, lineHeight = 24, weight = FontWeight.SemiBold),
+    // Dashboard's 今天 — the one place a number-of-the-day sized statement belongs.
+    headlineMedium = cjk(fontSize = 30, lineHeight = 40, weight = FontWeight.Bold),
+    // Screen titles.
+    headlineSmall = cjk(fontSize = 24, lineHeight = 34, weight = FontWeight.SemiBold),
+    titleLarge = cjk(fontSize = 19, lineHeight = 27, weight = FontWeight.SemiBold),
+    // Card titles.
+    titleMedium = cjk(fontSize = 17, lineHeight = 26, weight = FontWeight.SemiBold),
+    // Quiet card titles — a real step below titleMedium, not a shade of it.
     titleSmall = cjk(fontSize = 14, lineHeight = 21, weight = FontWeight.Medium),
     bodyLarge = cjk(fontSize = 16, lineHeight = 27, weight = FontWeight.Normal),
-    bodyMedium = cjk(fontSize = 14, lineHeight = 23, weight = FontWeight.Normal),
-    bodySmall = cjk(fontSize = 12, lineHeight = 20, weight = FontWeight.Normal),
+    // Task and habit names: the text you actually read on every screen.
+    bodyMedium = cjk(fontSize = 15, lineHeight = 25, weight = FontWeight.Normal),
+    bodySmall = cjk(fontSize = 13, lineHeight = 21, weight = FontWeight.Normal),
     labelLarge = cjk(fontSize = 14, lineHeight = 20, weight = FontWeight.Medium),
-    labelMedium = cjk(fontSize = 12, lineHeight = 17, weight = FontWeight.Medium),
-    labelSmall = cjk(fontSize = 11, lineHeight = 16, weight = FontWeight.Medium),
+    labelMedium = cjk(fontSize = 13, lineHeight = 19, weight = FontWeight.Medium),
+    labelSmall = cjk(fontSize = 12, lineHeight = 18, weight = FontWeight.Medium),
 )

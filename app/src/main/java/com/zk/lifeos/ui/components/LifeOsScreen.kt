@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.zk.lifeos.ui.theme.Space
 
 /**
  * Shared page frame: transparent scaffold over the theme background, a plain title bar, and a
@@ -59,7 +60,10 @@ fun LifeOsScreen(
         },
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                // Explicitly headlineSmall rather than the app bar's default titleLarge: at 20sp the
+                // screen's own name was barely larger than the card titles under it, so a screen
+                // opened with nothing leading it. This is the anchor every screen was missing.
+                title = { Text(title, style = MaterialTheme.typography.headlineSmall) },
                 navigationIcon = navigationIcon,
                 actions = actions,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
@@ -72,9 +76,13 @@ fun LifeOsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
+                // A little air under the title bar; `spacedBy` only puts gaps *between* children.
+                .padding(top = Space.tight)
                 // Enough clearance that the add button never sits on top of the last card.
                 .padding(bottom = 96.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            // Was 14dp — almost exactly the 12dp used *inside* a card, so the boundary between two
+            // sections carried no more weight than a boundary within one. See [Space].
+            verticalArrangement = Arrangement.spacedBy(Space.block),
         ) {
             content()
         }

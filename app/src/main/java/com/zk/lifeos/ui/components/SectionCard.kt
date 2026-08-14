@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.zk.lifeos.ui.theme.Space
 
 /**
  * The one card shape the whole app uses: title row, optional trailing text, content below.
@@ -60,7 +61,9 @@ fun SectionCard(
     ) {
         Column(
             modifier = Modifier.padding(if (quiet) 16.dp else 18.dp),
-            verticalArrangement = Arrangement.spacedBy(if (quiet) 10.dp else 12.dp),
+            // Both steps of the scale, and they now sit two steps below the gap *between* cards —
+            // so「同一张卡里的东西」and「两张卡」stopped looking like the same kind of boundary.
+            verticalArrangement = Arrangement.spacedBy(if (quiet) Space.tight else Space.inner),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(

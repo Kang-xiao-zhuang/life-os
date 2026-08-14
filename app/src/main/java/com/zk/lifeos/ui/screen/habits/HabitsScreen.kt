@@ -33,6 +33,7 @@ import com.zk.lifeos.ui.components.LifeOsFab
 import com.zk.lifeos.ui.components.LifeOsScreen
 import com.zk.lifeos.ui.components.NameEmojiDialog
 import com.zk.lifeos.ui.components.SectionCard
+import com.zk.lifeos.ui.components.WeekColumnWidth
 import com.zk.lifeos.ui.components.habitEmojis
 import com.zk.lifeos.ui.components.pieceCount
 
@@ -171,7 +172,9 @@ private fun WeekdayHeader() {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        // Same column geometry as the dots below, so each label sits over its own day — and so a
+        // 汉字 has room to draw. It used to be boxed at the dot's 8dp and was clipped.
+        Row {
             stringArrayResource(R.array.weekday_initials).forEach { label ->
                 Text(
                     text = label,
@@ -180,7 +183,7 @@ private fun WeekdayHeader() {
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     softWrap = false,
-                    modifier = Modifier.width(8.dp),
+                    modifier = Modifier.width(WeekColumnWidth),
                 )
             }
         }

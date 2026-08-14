@@ -112,11 +112,21 @@ fun HabitRow(
     }
 }
 
+/**
+ * One column of the week strip.
+ *
+ * The dot itself is 8dp, but the column has to be wide enough for the 一/二/三 label that sits above
+ * it on the Habits screen. Sizing the label to the *dot* (8dp) is what was clipping those characters:
+ * a 汉字 is wider than 8dp at any readable size, so each one overflowed its box into its neighbour.
+ * Both rows lay out on this same width, which is also what keeps a label centred over its own dot.
+ */
+internal val WeekColumnWidth = 15.dp
+
 /** Seven dots, Monday first. Filled = checked; hollow = not. */
 @Composable
 fun WeekDots(week: List<Boolean>, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
-    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+    Row(modifier = modifier) {
         week.forEach { done ->
             // Today's dot fills in as you check in, so the change is visible in two places at once
             // and the week strip stops looking like a static decoration.
@@ -126,10 +136,15 @@ fun WeekDots(week: List<Boolean>, modifier: Modifier = Modifier) {
                 label = "weekDot",
             )
             Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(color = dotColor, shape = CircleShape)
-            )
+                modifier = Modifier.width(WeekColumnWidth),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(color = dotColor, shape = CircleShape)
+                )
+            }
         }
     }
 }
