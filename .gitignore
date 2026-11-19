@@ -21,6 +21,17 @@ keystore.properties
 .idea/
 .vscode/
 
+## Next.js / Web build
+.next/
+out/
+node_modules/
+*.tsbuildinfo
+next-env.d.ts
+
+## Local preview artifacts
+test-results/
+playwright-report/
+
 ## Misc
 .DS_Store
 *.hprof

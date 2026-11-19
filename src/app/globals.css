@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens — Track100 米白克制风。RGB triplets so Tailwind can apply alpha. */
+:root {
+  --primary: 85 107 47; /* #556B2F olive */
+  --primary-hover: 101 123 58;
+  --background: 248 245 238; /* #F8F5EE warm paper */
+  --surface: 255 253 248;
+  --surface-quiet: 251 249 243;
+  --border: 230 225 215;
+  --text-primary: 44 44 44;
+  --text-secondary: 119 119 119;
+  --success: 107 191 89;
+  --warning: 230 162 60;
+  --danger: 198 82 72;
+  /* 四个功能域的柔和强调色(沿用 Track100 调色原语) */
+  --tint-task: 85 107 47; /* olive — 任务 */
+  --tint-project: 74 106 138; /* blue — 项目 */
+  --tint-habit: 58 122 106; /* mint — 习惯 */
+  --tint-journal: 122 100 168; /* lavender — 复盘 */
+}
+
+.dark {
+  /* Gray scale, never pure black. */
+  --primary: 154 168 106;
+  --primary-hover: 168 182 120;
+  --background: 24 24 27;
+  --surface: 39 39 42;
+  --surface-quiet: 32 32 35;
+  --border: 63 63 70;
+  --text-primary: 244 244 245;
+  --text-secondary: 161 161 170;
+  --success: 107 191 89;
+  --warning: 230 162 60;
+  --danger: 224 116 104;
+  --tint-task: 154 168 106;
+  --tint-project: 128 160 205;
+  --tint-habit: 122 184 165;
+  --tint-journal: 176 156 224;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: rgb(var(--background));
+  color: rgb(var(--text-primary));
+  font-family: Inter, "Noto Sans SC", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Markdown 复盘渲染 */
+.md-body { line-height: 1.7; }
+.md-body p { margin: 0.35em 0; }
+.md-body strong { font-weight: 600; }
+.md-body em { font-style: italic; }
+.md-body h1, .md-body h2, .md-body h3 { font-weight: 600; margin: 0.6em 0 0.3em; }
+.md-body h1 { font-size: 1.35em; }
+.md-body h2 { font-size: 1.18em; }
+.md-body h3 { font-size: 1.06em; }
+.md-body ul, .md-body ol { margin: 0.35em 0; padding-left: 1.3em; }
+.md-body ul { list-style: disc; }
+.md-body ol { list-style: decimal; }
+.md-body li { margin: 0.15em 0; }
+.md-body blockquote { border-left: 3px solid rgb(var(--border)); padding-left: 0.7em; color: rgb(var(--text-secondary)); margin: 0.4em 0; }
+.md-body code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; color: rgb(var(--primary)); }
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pop { 0% { transform: scale(0.6); opacity: 0.5; } 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+.animate-fade-in { animation: fade-in 0.25s ease-out both; }
+.animate-fade-up { animation: fade-up 0.3s ease-out both; }
+.animate-pop { animation: pop 0.28s ease-out both; }

@@ -1,0 +1,381 @@
+import { useAppStore } from "@/store/app.store";
+
+type Dict = Record<string, string>;
+
+const zh: Dict = {
+  // 应用 / 导航
+  "app.name": "LifeOS",
+  "nav.home": "首页",
+  "nav.projects": "项目",
+  "nav.capture": "记录",
+  "nav.habits": "习惯",
+  "nav.journal": "复盘",
+
+  // 通用
+  "common.cancel": "取消",
+  "common.save": "保存",
+  "common.delete": "删除",
+  "common.edit": "编辑",
+  "common.create": "新建",
+  "common.archive": "归档",
+  "common.restore": "恢复",
+  "common.confirm": "确定",
+  "common.undo": "撤销",
+  "common.none": "无",
+  "common.today": "今天",
+  "common.yesterday": "昨天",
+  "common.tomorrow": "明天",
+  "common.all": "全部",
+  "common.more": "更多",
+  "common.saved": "已保存",
+  "common.unsaved": "有未保存内容",
+  "common.empty": "还没有内容",
+  "common.close": "关闭",
+
+  // 首页
+  "home.today": "今天",
+  "home.dailyQuote": "每日一句",
+  "home.mit": "今日最重要",
+  "home.mitEmpty": "挑一两件今天最重要的事",
+  "home.mitCarried": "昨晚带过来的想法",
+  "home.mitWarning": "都最重要就等于没有重点（最多 2 件）",
+  "home.tasksToday": "今天的任务",
+  "home.tasksEmpty": "今天没有到期的事，享受这份清爽",
+  "home.overdue": "{n} 项逾期",
+  "home.moveOverdue": "把 {n} 项挪到今天",
+  "home.moved": "已挪到今天",
+  "home.habits": "今日习惯",
+  "home.habitsEmpty": "还没有习惯，去添加一个",
+  "home.habitsDone": "已打卡 {done}/{total}",
+  "home.quickCapture": "快速记录",
+  "home.quickCaptureSub": "想到什么，一句话记下来",
+  "home.journal": "今日复盘",
+  "home.journalEmpty": "今晚花一分钟回顾一下",
+  "home.journalDone": "已写",
+  "home.settings": "设置",
+
+  // 项目
+  "projects.title": "项目",
+  "projects.allTasks": "所有待办",
+  "projects.allTasksSub": "不分项目的一整张清单",
+  "projects.empty": "还没有项目",
+  "projects.emptySub": "新建项目，把长期在做的事放进来",
+  "projects.archived": "已归档",
+  "projects.unassigned": "未归类任务",
+  "projects.openTasks": "{n} 项待做",
+  "projects.new": "新建项目",
+  "projects.name": "项目名称",
+  "projects.emoji": "图标（可选）",
+
+  // 项目详情
+  "project.detail": "项目详情",
+  "project.open": "待办",
+  "project.done": "已完成",
+  "project.empty": "这个项目还没有任务",
+  "project.newTask": "新任务",
+  "project.progress": "{done}/{total} · {pct}%",
+
+  // 任务
+  "task.new": "新任务",
+  "task.edit": "编辑任务",
+  "task.title": "任务标题",
+  "task.notes": "备注（可选）",
+  "task.dueDate": "到期日",
+  "task.noDue": "无日期",
+  "task.setDate": "选日期",
+  "task.repeat": "重复",
+  "task.noRepeat": "不重复",
+  "task.mit": "今日最重要",
+  "task.project": "所属项目",
+  "task.noProject": "未归类",
+  "task.overdue": "逾期",
+  "task.repeatTag": "重复任务",
+
+  // 所有待办
+  "allTasks.title": "所有待办",
+  "allTasks.overdue": "已逾期",
+  "allTasks.today": "今天到期",
+  "allTasks.later": "以后",
+  "allTasks.noDate": "没有日期",
+  "allTasks.empty": "所有任务都完成了",
+
+  // 记录
+  "capture.title": "快速记录",
+  "capture.placeholder": "想到什么就写下来…",
+  "capture.submit": "记下来",
+  "capture.inbox": "待整理",
+  "capture.empty": "收件箱是空的",
+  "capture.emptySub": "记录不带结构和日期，先记下再说",
+  "capture.toTask": "转为任务",
+  "capture.help": "点 + 变成任务，点 × 删除",
+
+  // 习惯
+  "habits.title": "习惯",
+  "habits.today": "今天的习惯",
+  "habits.empty": "还没有习惯",
+  "habits.emptySub": "从一个小习惯开始",
+  "habits.new": "新建习惯",
+  "habits.name": "习惯名称",
+  "habits.month": "这个月",
+  "habits.archived": "已归档",
+  "habits.streak": "连续 {n} 天",
+  "habits.days": "活跃 {n} 天",
+  "habits.perfect": "满勤 {n} 天",
+  "habits.hint": "点一下打卡，再点一下取消",
+  "habits.deleteWarn": "彻底删除会销毁 {n} 条打卡记录，且无法恢复。",
+
+  // 复盘
+  "journal.title": "每日复盘",
+  "journal.done": "今天完成了什么",
+  "journal.win": "今天最大的收获",
+  "journal.problems": "遇到的问题",
+  "journal.tomorrow": "明天最重要的一件事",
+  "journal.chooseDate": "选日期",
+  "journal.backToToday": "回到今天",
+  "journal.past": "正在编辑过去",
+  "journal.read": "阅读",
+  "journal.edit": "编辑",
+  "journal.fillCompleted": "带出已完成的 {n} 项",
+  "journal.history": "以前",
+  "journal.empty": "还没有写过复盘",
+  "journal.futureBlocked": "还没发生的日子没法复盘",
+  "journal.saved": "已保存",
+
+  // 设置
+  "settings.title": "设置",
+  "settings.appearance": "外观",
+  "settings.theme": "主题",
+  "settings.theme.system": "跟随系统",
+  "settings.theme.light": "浅色",
+  "settings.theme.dark": "深色",
+  "settings.language": "语言",
+  "settings.language.system": "跟随系统",
+  "settings.data": "数据",
+  "settings.export": "导出备份",
+  "settings.import": "导入备份",
+  "settings.lastBackup": "上次备份：{when}",
+  "settings.never": "从未",
+  "settings.daysAgo": "{n} 天前",
+  "settings.backupHint": "超过 14 天没备份会变黄提醒你",
+  "settings.about": "关于",
+  "settings.version": "版本 {v}",
+  "settings.localOnly": "所有数据只存在本机，卸载即丢失，请定期导出备份。",
+
+  // 备份
+  "backup.importTitle": "确认导入",
+  "backup.exportedAt": "备份时间",
+  "backup.counts": "{p} 个项目 · {t} 个任务 · {h} 个习惯 · {j} 篇复盘",
+  "backup.replace": "覆盖恢复（换机用）",
+  "backup.replaceHint": "用备份整体替换本机数据，覆盖前自动留快照可回滚",
+  "backup.success": "导入成功",
+  "backup.failed": "导入失败：{msg}",
+  "backup.invalid": "备份文件格式不正确或已损坏",
+  "backup.schemaMismatch": "备份版本 {a} 与当前 {b} 不一致，拒绝导入",
+
+  // 每日一句
+  "quote.1": "一次只做一件事。",
+  "quote.2": "完成比完美重要。",
+  "quote.3": "先开始，再想清楚。",
+  "quote.4": "今天的一点点，是明天的一大截。",
+  "quote.5": "慢一点没关系，别停。",
+  "quote.6": "把重要的事，放在最清醒的时候。",
+  "quote.7": "你不需要每天都高效，只需要大多数时候在场。",
+};
+
+const en: Dict = {
+  "app.name": "LifeOS",
+  "nav.home": "Today",
+  "nav.projects": "Projects",
+  "nav.capture": "Capture",
+  "nav.habits": "Habits",
+  "nav.journal": "Journal",
+
+  "common.cancel": "Cancel",
+  "common.save": "Save",
+  "common.delete": "Delete",
+  "common.edit": "Edit",
+  "common.create": "New",
+  "common.archive": "Archive",
+  "common.restore": "Restore",
+  "common.confirm": "Confirm",
+  "common.undo": "Undo",
+  "common.none": "None",
+  "common.today": "Today",
+  "common.yesterday": "Yesterday",
+  "common.tomorrow": "Tomorrow",
+  "common.all": "All",
+  "common.more": "More",
+  "common.saved": "Saved",
+  "common.unsaved": "Unsaved changes",
+  "common.empty": "Nothing here yet",
+  "common.close": "Close",
+
+  "home.today": "Today",
+  "home.dailyQuote": "Thought for today",
+  "home.mit": "Most important today",
+  "home.mitEmpty": "Pick one or two things that matter most today",
+  "home.mitCarried": "Carried over from last night",
+  "home.mitWarning": "If everything matters, nothing does (max 2)",
+  "home.tasksToday": "Today's tasks",
+  "home.tasksEmpty": "Nothing due today — enjoy the clarity",
+  "home.overdue": "{n} overdue",
+  "home.moveOverdue": "Move {n} to today",
+  "home.moved": "Moved to today",
+  "home.habits": "Today's habits",
+  "home.habitsEmpty": "No habits yet — add one to get started",
+  "home.habitsDone": "{done}/{total} checked",
+  "home.quickCapture": "Quick capture",
+  "home.quickCaptureSub": "Write it down in one line",
+  "home.journal": "Today's journal",
+  "home.journalEmpty": "Take a minute tonight to reflect",
+  "home.journalDone": "Written",
+  "home.settings": "Settings",
+
+  "projects.title": "Projects",
+  "projects.allTasks": "All tasks",
+  "projects.allTasksSub": "One flat list across all projects",
+  "projects.empty": "No projects yet",
+  "projects.emptySub": "Create a project for the things you're working on",
+  "projects.archived": "Archived",
+  "projects.unassigned": "Unassigned tasks",
+  "projects.openTasks": "{n} to do",
+  "projects.new": "New project",
+  "projects.name": "Project name",
+  "projects.emoji": "Icon (optional)",
+
+  "project.detail": "Project detail",
+  "project.open": "To do",
+  "project.done": "Done",
+  "project.empty": "This project has no tasks yet",
+  "project.newTask": "New task",
+  "project.progress": "{done}/{total} · {pct}%",
+
+  "task.new": "New task",
+  "task.edit": "Edit task",
+  "task.title": "Task title",
+  "task.notes": "Notes (optional)",
+  "task.dueDate": "Due date",
+  "task.noDue": "No date",
+  "task.setDate": "Pick a date",
+  "task.repeat": "Repeat",
+  "task.noRepeat": "Never",
+  "task.mit": "Most important today",
+  "task.project": "Project",
+  "task.noProject": "Unassigned",
+  "task.overdue": "Overdue",
+  "task.repeatTag": "Repeats",
+
+  "allTasks.title": "All tasks",
+  "allTasks.overdue": "Overdue",
+  "allTasks.today": "Due today",
+  "allTasks.later": "Later",
+  "allTasks.noDate": "No date",
+  "allTasks.empty": "All tasks are done",
+
+  "capture.title": "Quick capture",
+  "capture.placeholder": "Write down whatever's on your mind…",
+  "capture.submit": "Capture",
+  "capture.inbox": "Inbox",
+  "capture.empty": "Inbox is empty",
+  "capture.emptySub": "Capture has no structure or date — just write it down",
+  "capture.toTask": "To task",
+  "capture.help": "Tap + to make it a task, × to delete",
+
+  "habits.title": "Habits",
+  "habits.today": "Today's habits",
+  "habits.empty": "No habits yet",
+  "habits.emptySub": "Start with one small habit",
+  "habits.new": "New habit",
+  "habits.name": "Habit name",
+  "habits.month": "This month",
+  "habits.archived": "Archived",
+  "habits.streak": "{n} day streak",
+  "habits.days": "{n} active days",
+  "habits.perfect": "{n} perfect days",
+  "habits.hint": "Tap to check in, tap again to undo",
+  "habits.deleteWarn": "Deleting permanently destroys {n} check-ins and can't be undone.",
+
+  "journal.title": "Daily journal",
+  "journal.done": "What did you finish today",
+  "journal.win": "The biggest takeaway",
+  "journal.problems": "What went wrong",
+  "journal.tomorrow": "The one thing that matters tomorrow",
+  "journal.chooseDate": "Pick a date",
+  "journal.backToToday": "Back to today",
+  "journal.past": "Editing a past day",
+  "journal.read": "Read",
+  "journal.edit": "Edit",
+  "journal.fillCompleted": "Bring in {n} completed items",
+  "journal.history": "Earlier",
+  "journal.empty": "No journal entries yet",
+  "journal.futureBlocked": "You can't reflect on a day that hasn't happened",
+  "journal.saved": "Saved",
+
+  "settings.title": "Settings",
+  "settings.appearance": "Appearance",
+  "settings.theme": "Theme",
+  "settings.theme.system": "System",
+  "settings.theme.light": "Light",
+  "settings.theme.dark": "Dark",
+  "settings.language": "Language",
+  "settings.language.system": "System",
+  "settings.data": "Data",
+  "settings.export": "Export backup",
+  "settings.import": "Import backup",
+  "settings.lastBackup": "Last backup: {when}",
+  "settings.never": "Never",
+  "settings.daysAgo": "{n} days ago",
+  "settings.backupHint": "Turns amber after 14 days without a backup",
+  "settings.about": "About",
+  "settings.version": "Version {v}",
+  "settings.localOnly": "All data lives on this device — uninstalling loses it. Export regularly.",
+
+  "backup.importTitle": "Confirm import",
+  "backup.exportedAt": "Exported at",
+  "backup.counts": "{p} projects · {t} tasks · {h} habits · {j} entries",
+  "backup.replace": "Replace everything (new device)",
+  "backup.replaceHint": "Replace local data with the backup. A snapshot is saved first so you can roll back.",
+  "backup.success": "Import successful",
+  "backup.failed": "Import failed: {msg}",
+  "backup.invalid": "Invalid or corrupted backup file",
+  "backup.schemaMismatch": "Backup version {a} doesn't match current {b} — import refused",
+
+  "quote.1": "One thing at a time.",
+  "quote.2": "Done is better than perfect.",
+  "quote.3": "Start first, figure it out later.",
+  "quote.4": "A little today adds up to a lot tomorrow.",
+  "quote.5": "Slow is fine. Just don't stop.",
+  "quote.6": "Put what matters most where you're sharpest.",
+  "quote.7": "You don't need to be productive every day — just show up most days.",
+};
+
+const DICTS = { zh, en } as const;
+export type Lang = keyof typeof DICTS;
+export type TFunc = (key: string, params?: Record<string, string | number>) => string;
+
+export function translate(lang: Lang, key: string, params?: Record<string, string | number>): string {
+  let s = DICTS[lang][key] ?? DICTS.zh[key] ?? key;
+  if (params) for (const [k, v] of Object.entries(params)) s = s.replaceAll(`{${k}}`, String(v));
+  return s;
+}
+
+/** 从系统语言推断：非 zh 一律英文。 */
+export function resolveLang(pref: "system" | "zh" | "en"): Lang {
+  if (pref !== "system") return pref;
+  if (typeof navigator === "undefined") return "zh";
+  return navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en";
+}
+
+/** Hook — re-renders when language changes. */
+export function useT(): { t: TFunc; lang: Lang } {
+  const pref = useAppStore((s) => s.settings.language);
+  const lang = resolveLang(pref);
+  const t: TFunc = (key, params) => translate(lang, key, params);
+  return { t, lang };
+}
+
+/** 按日期稳定选一句（当天不变、隔天换），对齐 Kotlin 的 epoch-day 播种。 */
+export function dailyQuote(lang: Lang, dateStr: string): string {
+  const n = dateStr.split("-").reduce((a, x) => a * 31 + Number(x), 0);
+  return translate(lang, `quote.${(n % 7) + 1}`);
+}
