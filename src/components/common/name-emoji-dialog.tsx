@@ -1,12 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n";
-import { cn } from "@/lib/cn";
 import { Modal } from "./modal";
-
-const PROJECT_EMOJIS = ["💼", "📚", "🏋", "🎥", "✍", "💰", "🏠", "🎯", "🧑‍💻", "🌱"];
-const HABIT_EMOJIS = ["📚", "🏋", "✍", "🎥", "🇬🇧", "🧘", "💧", "🌅", "🏃", "🎸"];
+import { EmojiStrip } from "./emoji-strip";
 
 interface Props {
   open: boolean;
@@ -24,22 +21,28 @@ export function NameEmojiDialog({ open, onClose, onSave, title, nameLabel, initi
   const { t } = useT();
   const [name, setName] = useState(initialName);
   const [emoji, setEmoji] = useState(initialEmoji);
-  const emojis = kind === "habit" ? HABIT_EMOJIS : PROJECT_EMOJIS;
+
+  // showNew 的弹层常驻挂载，打开时重置，避免上一次输入残留
+  useEffect(() => {
+    if (!open) return;
+    setName(initialName);
+    setEmoji(initialEmoji);
+  }, [open, initialName, initialEmoji]);
 
   return (
-    <Modal open={open} onClose={onClose} title={title}       footer={
-        <div className="flex gap-3">
-          {extraAction && (
-            <button onClick={() => { extraAction.onClick(); onClose(); }} className="h-11 shrink-0 rounded-btn border border-border px-4 text-sm font-medium text-danger">
-              {extraAction.label}
-            </button>
-          )}
-          <button onClick={() => { if (name.trim()) { onSave(name.trim(), emoji); onClose(); } }} disabled={!name.trim()}
-            className="h-11 flex-1 rounded-btn bg-primary text-sm font-semibold text-background disabled:opacity-40">
-            {t("common.save")}
+    <Modal open={open} onClose={onClose} title={title} footer={
+      <div className="flex gap-3">
+        {extraAction && (
+          <button onClick={() => { extraAction.onClick(); onClose(); }} className="h-11 shrink-0 rounded-btn border border-border px-4 text-sm font-medium text-danger">
+            {extraAction.label}
           </button>
-        </div>
-      }>
+        )}
+        <button onClick={() => { if (name.trim()) { onSave(name.trim(), emoji); onClose(); } }} disabled={!name.trim()}
+          className="h-11 flex-1 rounded-btn bg-primary text-sm font-semibold text-background disabled:opacity-40">
+          {t("common.save")}
+        </button>
+      </div>
+    }>
       <div className="space-y-5">
         <div>
           <label className="mb-2 block text-xs font-medium text-text-secondary">{nameLabel}</label>
@@ -47,15 +50,7 @@ export function NameEmojiDialog({ open, onClose, onSave, title, nameLabel, initi
         </div>
         <div>
           <label className="mb-2 block text-xs font-medium text-text-secondary">{t("projects.emoji")}</label>
-          <div className="flex flex-wrap gap-2">
-            {emojis.map((e) => (
-              <button key={e} onClick={() => setEmoji((prev) => (prev === e ? "" : e))}
-                className={cn("flex h-10 w-10 items-center justify-center rounded-xl border text-xl transition-transform active:scale-90",
-                  emoji === e ? "border-primary bg-primary/10 ring-2 ring-primary/50" : "border-border bg-background")}>
-                {e}
-              </button>
-            ))}
-          </div>
+          <EmojiStrip value={emoji} onChange={setEmoji} />
         </div>
       </div>
     </Modal>

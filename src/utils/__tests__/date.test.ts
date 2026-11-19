@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateKey, addDays, addMonths, diffDays, weekDays, monthDays, shiftMonth } from "@/utils/date";
+import { dateKey, addDays, addMonths, diffDays, weekDays, monthDays, shiftMonth, yearProgress } from "@/utils/date";
 
 describe("date utils (TZ=Asia/Shanghai)", () => {
   it("dayKey 按本地日期", () => expect(dateKey(new Date("2026-11-02T23:30:00Z"))).toBe("2026-11-03"));
@@ -16,4 +16,13 @@ describe("date utils (TZ=Asia/Shanghai)", () => {
   });
   it("monthDays 平年2月 28 天", () => expect(monthDays("2026-02")).toHaveLength(28));
   it("shiftMonth 跨年", () => expect(shiftMonth("2026-01", -1)).toBe("2025-12"));
+  it("yearProgress 元旦", () => {
+    expect(yearProgress(new Date(2026, 0, 1))).toEqual({ dayOfYear: 1, daysLeft: 364, totalDays: 365, year: 2026 });
+  });
+  it("yearProgress 普通日", () => {
+    expect(yearProgress(new Date(2026, 10, 19))).toEqual({ dayOfYear: 323, daysLeft: 42, totalDays: 365, year: 2026 });
+  });
+  it("yearProgress 闰年", () => {
+    expect(yearProgress(new Date(2024, 11, 31))).toEqual({ dayOfYear: 366, daysLeft: 0, totalDays: 366, year: 2024 });
+  });
 });

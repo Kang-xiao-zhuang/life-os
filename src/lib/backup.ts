@@ -36,6 +36,9 @@ export const backupSchema = z.object({
   settings: z.object({
     themeMode: z.enum(["system", "light", "dark"]).optional(),
     language: z.enum(["system", "zh", "en"]).optional(),
+    accentHue: z.number().nullable().optional(),
+    accentSat: z.number().nullable().optional(),
+    accentLight: z.number().nullable().optional(),
   }).passthrough().optional(),
 });
 
@@ -69,7 +72,13 @@ export function buildBackup(input: {
     habits: input.habits,
     habitChecks: input.habitChecks,
     journals: input.journals,
-    settings: { themeMode: input.settings.themeMode, language: input.settings.language },
+    settings: {
+      themeMode: input.settings.themeMode,
+      language: input.settings.language,
+      accentHue: input.settings.accentHue,
+      accentSat: input.settings.accentSat,
+      accentLight: input.settings.accentLight,
+    },
   };
 }
 

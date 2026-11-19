@@ -72,6 +72,10 @@ export interface Settings {
   themeMode: ThemeMode;
   language: AppLanguage;
   lastBackupAt: number; // epoch ms，0 = 从未
+  /** 自定义主题色：hue 为 null = 默认橄榄绿；sat/light 为 HSL 的 0..1。 */
+  accentHue: number | null;
+  accentSat: number | null;
+  accentLight: number | null;
 }
 
 /** 逾期批量挪期撤销用。 */

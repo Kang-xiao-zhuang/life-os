@@ -4,7 +4,9 @@ import { useRef, useState } from "react";
 import { Palette, Globe, Database, Download, Upload, Info, ChevronRight, Check } from "lucide-react";
 import { useAppStore } from "@/store/app.store";
 import { useT } from "@/lib/i18n";
-import { useTheme } from "@/lib/use-theme";
+import { resolvedTheme, useTheme } from "@/lib/use-theme";
+import { AccentPicker } from "@/components/common/accent-picker";
+import { DEFAULT_ACCENT_HUE, accentHex, accentVars } from "@/lib/accent";
 import { buildBackup, downloadBackup, parseBackup, previewBackup, type BackupPreview } from "@/lib/backup";
 import type { BackupData } from "@/types";
 import { PageHeader } from "@/components/common/page-header";
@@ -28,6 +30,7 @@ export default function SettingsPage() {
 
   const [pending, setPending] = useState<{ data: BackupData; preview: BackupPreview } | null>(null);
   const [msg, setMsg] = useState("");
+  const [accentOpen, setAccentOpen] = useState(false);
 
   const onExport = () => {
     const s = useAppStore.getState();
@@ -64,6 +67,12 @@ export default function SettingsPage() {
 
   const backupDays = settings.lastBackupAt ? Math.floor((Date.now() - settings.lastBackupAt) / DAY) : null;
   const backupStale = backupDays === null || backupDays >= 14;
+  const theme = resolvedTheme(settings.themeMode);
+  const accentHue = settings.accentHue;
+  const accentLabel = accentHue == null
+    ? t("settings.accentDefault")
+    : accentHex(accentHue, theme, settings.accentSat, settings.accentLight).toUpperCase();
+  const accentSwatch = `rgb(${accentVars(accentHue ?? DEFAULT_ACCENT_HUE, theme, settings.accentSat, settings.accentLight).primary})`;
 
   if (!hydrated) return <div className="px-5 pt-6"><div className="h-40 animate-pulse rounded-card bg-surface" /></div>;
 
@@ -92,6 +101,19 @@ export default function SettingsPage() {
             ]}
             onChange={setLanguage}
           />
+
+          <div className="mt-4 border-t border-border pt-3">
+            <button type="button" onClick={() => setAccentOpen((v) => !v)}
+              className="flex w-full items-center justify-between gap-2 text-left">
+              <span className="text-xs font-medium text-text-secondary">{t("settings.accent")}</span>
+              <span className="flex items-center gap-2">
+                <span className="font-mono text-[11px] tabular-nums text-text-primary">{accentLabel}</span>
+                <span className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: accentSwatch }} />
+                <ChevronRight size={15} className={`text-text-secondary transition-transform ${accentOpen ? "rotate-90" : ""}`} />
+              </span>
+            </button>
+            {accentOpen && <AccentPicker />}
+          </div>
         </SectionCard>
 
         <SectionCard title={t("settings.data")}>

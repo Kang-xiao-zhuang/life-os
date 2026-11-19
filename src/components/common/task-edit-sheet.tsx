@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Check, Trash2 } from "lucide-react";
 import type { Task, RepeatRule } from "@/types";
 import { useAppStore } from "@/store/app.store";
@@ -35,6 +35,7 @@ export function TaskEditSheet({ open, onClose, editing, defaultProjectId, defaul
   const [repeatRule, setRepeatRule] = useState<RepeatRule | null>(editing?.repeatRule ?? null);
   const [isMit, setIsMit] = useState(editing?.isMit ?? defaultMit ?? false);
   const [projectId, setProjectId] = useState<string | null>(editing?.projectId ?? defaultProjectId ?? null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   // 打开时若是新建，重置为空（editing 变化时需要重置，这里用 key 重建组件处理）
   const activeProjects = projects.filter((p) => !p.archived);
@@ -90,9 +91,21 @@ export function TaskEditSheet({ open, onClose, editing, defaultProjectId, defaul
             <button className={chip(!dueDate)} onClick={() => setDueDate(null)}>{t("task.noDue")}</button>
             <button className={chip(dueDate === todayKey())} onClick={() => setDueDate(todayKey())}>{t("common.today")}</button>
             <button className={chip(dueDate === addDays(todayKey(), 1))} onClick={() => setDueDate(addDays(todayKey(), 1))}>{t("common.tomorrow")}</button>
-            <label className={cn(chip(!!dueDate && dueDate !== todayKey() && dueDate !== addDays(todayKey(), 1)), "cursor-pointer")}>
+            <label className={cn(chip(!!dueDate && dueDate !== todayKey() && dueDate !== addDays(todayKey(), 1)), "relative cursor-pointer overflow-hidden")}>
               {dueDate && dueDate !== todayKey() && dueDate !== addDays(todayKey(), 1) ? dueDate : t("task.setDate")}
-              <input type="date" value={dueDate ?? ""} onChange={(e) => setDueDate(e.target.value || null)} className="sr-only" />
+              {/* 覆盖整块 chip：移动端点 label 内的 1px 隐藏 input 不会拉起日期选择器 */}
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={dueDate ?? ""}
+                onChange={(e) => setDueDate(e.target.value || null)}
+                onClick={(e) => {
+                  const input = e.currentTarget as HTMLInputElement & { showPicker?: () => void };
+                  try { input.showPicker?.(); } catch { /* 已弹出或浏览器不支持时忽略 */ }
+                }}
+                aria-label={t("task.dueDate")}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
             </label>
           </div>
         </div>

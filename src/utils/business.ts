@@ -191,6 +191,28 @@ export function dayCompletions(
 
 export const journalIsEmpty = isJournalEmpty;
 
+// ── 活跃度 ────────────────────────────────────────────────
+
+export interface ActivityPoint {
+  date: string; // "MM-DD"
+  count: number;
+}
+
+/** 近 N 天活跃：完成任务数 + 习惯打卡数，按本地日期归集。 */
+export function activityDays(
+  tasks: Task[], checks: HabitCheck[], todayStr: string, days = 30,
+): ActivityPoint[] {
+  const dates = Array.from({ length: days }, (_, i) => addDays(todayStr, i - (days - 1)));
+  const byDay = new Map<string, number>();
+  for (const t of tasks) {
+    if (!t.done || !t.completedAt) continue;
+    const key = dateKey(new Date(t.completedAt));
+    byDay.set(key, (byDay.get(key) ?? 0) + 1);
+  }
+  for (const c of checks) byDay.set(c.date, (byDay.get(c.date) ?? 0) + 1);
+  return dates.map((date) => ({ date: date.slice(5), count: byDay.get(date) ?? 0 }));
+}
+
 // ── Dashboard 聚合 ────────────────────────────────────────
 
 export interface DashboardData {
@@ -201,6 +223,9 @@ export interface DashboardData {
   journal: JournalEntry | null;
   carriedMit: string;
   inboxCount: number;
+  todayDone: number;
+  todayHabits: number;
+  hasJournal: boolean;
 }
 
 export function dashboardData(
@@ -214,13 +239,17 @@ export function dashboardData(
   const yesterday = addDays(todayStr, -1);
   const yJournal = journals.find((j) => j.date === yesterday);
   const todayJournal = journals.find((j) => j.date === todayStr) ?? null;
+  const todayHabits = habitsToday(habits, checks, todayStr);
   return {
     mit,
     dueToday: due,
     overdue,
-    habits: habitsToday(habits, checks, todayStr),
+    habits: todayHabits,
     journal: todayJournal,
     carriedMit: yJournal?.tomorrowMit.trim() ?? "",
     inboxCount: captures.filter((c) => !c.processed).length,
+    todayDone: tasks.filter((t) => t.done && t.completedAt && dateKey(new Date(t.completedAt)) === todayStr).length,
+    todayHabits: todayHabits.filter((h) => h.checkedToday).length,
+    hasJournal: todayJournal !== null,
   };
 }

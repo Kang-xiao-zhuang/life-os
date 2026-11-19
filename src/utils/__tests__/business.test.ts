@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Task, Habit, HabitCheck } from "@/types";
 import {
   advanceRepeat, nextOccurrence, makeNextTask, findGeneratedOccurrence,
-  habitStreak, habitWeek, habitMonth, isOverdue, sortOpenTasks, appendCompletedLines, dashboardData,
+  habitStreak, habitWeek, habitMonth, isOverdue, sortOpenTasks, appendCompletedLines, dashboardData, activityDays,
 } from "@/utils/business";
 import { addDays, addMonths, dateKey } from "@/utils/date";
 
@@ -102,5 +102,27 @@ describe("Dashboard 聚合", () => {
 describe("复盘带出已完成", () => {
   it("追加并去重（忽略 - 前缀）", () => {
     expect(appendCompletedLines("- 读书\n- 跑步", ["读书", "写代码"])).toBe("- 读书\n- 跑步\n- 写代码");
+  });
+});
+
+describe("近 30 天活跃", () => {
+  it("按本地日期合并任务完成与习惯打卡，只保留窗口内日期", () => {
+    const done = task({ id: "done", done: true, completedAt: "2026-11-20T00:00:00Z" });
+    const old = task({ id: "old", done: true, completedAt: "2026-10-01T00:00:00Z" });
+    const checks: HabitCheck[] = [{ id: "c1", habitId: "h1", date: "2026-11-20", createdAt: "" }];
+    const points = activityDays([done, old], checks, "2026-11-20", 30);
+    expect(points).toHaveLength(30);
+    expect(points[points.length - 1]).toEqual({ date: "11-20", count: 2 });
+    expect(points.reduce((s, p) => s + p.count, 0)).toBe(2);
+  });
+  it("今日统计纳入完成任务、习惯与复盘", () => {
+    const done = task({ id: "done", done: true, completedAt: "2026-11-20T00:00:00Z" });
+    const h: Habit = { id: "h1", name: "读书", emoji: "", archived: false, sortOrder: 0, createdAt: "" };
+    const check: HabitCheck = { id: "c1", habitId: "h1", date: "2026-11-20", createdAt: "" };
+    const j = { date: "2026-11-20", done: "写了方案", win: "", problems: "", tomorrowMit: "", createdAt: "", updatedAt: "" };
+    const d = dashboardData([done], [h], [check], [j], [], "2026-11-20");
+    expect(d.todayDone).toBe(1);
+    expect(d.todayHabits).toBe(1);
+    expect(d.hasJournal).toBe(true);
   });
 });

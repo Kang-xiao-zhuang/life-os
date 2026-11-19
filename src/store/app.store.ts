@@ -13,6 +13,9 @@ const DEFAULT_SETTINGS: Settings = {
   themeMode: "system",
   language: "system",
   lastBackupAt: 0,
+  accentHue: null,
+  accentSat: null,
+  accentLight: null,
 };
 
 export interface TaskInput {
@@ -46,6 +49,7 @@ interface AppState {
   // settings
   setThemeMode: (m: ThemeMode) => void;
   setLanguage: (l: AppLanguage) => void;
+  setAccentColor: (hue: number | null, sat?: number | null, light?: number | null) => void;
   markBackedUp: () => void;
 
   // projects
@@ -143,6 +147,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setLanguage: (language) => {
     const settings = { ...get().settings, language };
+    set({ settings }); persist({ settings });
+  },
+  setAccentColor: (accentHue, accentSat = null, accentLight = null) => {
+    const settings = { ...get().settings, accentHue, accentSat, accentLight };
     set({ settings }); persist({ settings });
   },
   markBackedUp: () => {

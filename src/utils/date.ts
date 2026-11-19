@@ -3,6 +3,25 @@
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+export interface YearProgress {
+  dayOfYear: number;
+  /** 今年还剩几天（不含今天，12 月 31 日为 0）。 */
+  daysLeft: number;
+  totalDays: number;
+  year: number;
+}
+
+/** 年度进度：按本地时间算今天是第几天、还剩几天，自动处理闰年。 */
+export function yearProgress(now: Date): YearProgress {
+  const year = now.getFullYear();
+  const start = new Date(year, 0, 1).getTime();
+  const today = new Date(year, now.getMonth(), now.getDate()).getTime();
+  const nextStart = new Date(year + 1, 0, 1).getTime();
+  const totalDays = Math.round((nextStart - start) / 86400000);
+  const dayOfYear = Math.round((today - start) / 86400000) + 1;
+  return { dayOfYear, daysLeft: totalDays - dayOfYear, totalDays, year };
+}
+
 /** Date → "YYYY-MM-DD"（本地时区）。 */
 export function dateKey(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
