@@ -32,6 +32,9 @@ next-env.d.ts
 test-results/
 playwright-report/
 
+## Release artifacts (APKs and notes live only in GitHub Releases)
+/release
+
 ## Misc
 .DS_Store
 *.hprof
